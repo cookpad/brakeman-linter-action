@@ -23,7 +23,7 @@ class GithubCheckRunService
     result = {}
     @annotations.each_slice(MAX_ANNOTATIONS_SIZE) do |annotation|
       result.merge(client_patch_annotations(id, annotation))
-      result.merge(client_post_pull_requests(id, annotation))
+      result.merge(client_post_pull_requests(annotation))
     end
     result
   end
@@ -37,7 +37,7 @@ class GithubCheckRunService
     )
   end
 
-  def client_post_pull_requests(id, annotations)
+  def client_post_pull_requests(annotations)
     @client.post(
       "#{pull_request_endpoint_url}",
       create_pull_request_comment_payload(annotations)
