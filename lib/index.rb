@@ -19,6 +19,7 @@ project_path = ENV['PROJECT_PATH'].nil? ? ENV['GITHUB_WORKSPACE'] : "#{ENV['GITH
   token: ENV['GITHUB_TOKEN'],
   owner: ENV['GITHUB_REPOSITORY_OWNER'] || @event_json.dig('repository', 'owner', 'login'),
   repo: ENV['GITHUB_REPOSITORY_NAME'] || @event_json.dig('repository', 'name')
+  pull_request_number: ENV['GITHUB_PULL_REQUEST_NUMBER'] || @event_json.dig('pull_request', 'number')
 }
 
 @report =

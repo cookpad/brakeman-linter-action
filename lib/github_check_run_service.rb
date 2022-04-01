@@ -13,7 +13,7 @@ class GithubCheckRunService
 
   def run
     id = @client.post(
-      endpoint_url,
+      annotation_endpoint_url,
       create_check_payload
     )['id']
     @summary = @report_adapter.summary(@report)
@@ -22,22 +22,34 @@ class GithubCheckRunService
 
     result = {}
     @annotations.each_slice(MAX_ANNOTATIONS_SIZE) do |annotation|
-      result.merge(client_patch(id, annotation))
+      result.merge(client_patch_annotations(id, annotation))
+      result.merge(client_post_pull_requests(id, annotation))
     end
     result
   end
 
   private
 
-  def client_patch(id, annotations)
+  def client_patch_annotations(id, annotations)
     @client.patch(
-      "#{endpoint_url}/#{id}",
+      "#{annotation_endpoint_url}/#{id}",
       update_check_payload(annotations)
     )
   end
 
-  def endpoint_url
+  def client_post_pull_requests(id, annotations)
+    @client.post(
+      "#{pull_request_endpoint_url}",
+      create_pull_request_comment_payload(annotations)
+    )
+  end
+
+  def annotation_endpoint_url
     "/repos/#{@github_data[:owner]}/#{@github_data[:repo]}/check-runs"
+  end
+
+  def pull_request_endpoint_url
+    "/repos/#{@github_data[:owner]}/#{@github_data[:repo]}/pulls/#{@github_data[:pull_request_number]}/comments"
   end
 
   def create_check_payload
@@ -50,6 +62,21 @@ class GithubCheckRunService
   end
 
   def update_check_payload(annotations)
+    {
+      name: CHECK_NAME,
+      head_sha: @github_data[:sha],
+      status: 'completed',
+      completed_at: Time.now.iso8601,
+      conclusion: @conclusion,
+      output: {
+        title: CHECK_NAME,
+        summary: @summary,
+        annotations: annotations
+      }
+    }
+  end
+
+  def create_pull_request_comment_payload(annotations)
     {
       name: CHECK_NAME,
       head_sha: @github_data[:sha],
