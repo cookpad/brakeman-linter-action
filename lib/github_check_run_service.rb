@@ -4,7 +4,7 @@ class GithubCheckRunService
   CHECK_NAME = 'Brakeman'.freeze
   MAX_ANNOTATIONS_SIZE = 50.freeze
   EMOJI_MAPPER = {"High":"🚨", "Medium":"⚠️", "Weak":"❔"}.freeze
-
+  BRAKEMAN_URL = "https://brakemanscanner.org/docs/warning_types/".freeze
   def initialize(report, github_data, report_adapter)
     @report = report
     @github_data = github_data
@@ -39,7 +39,6 @@ class GithubCheckRunService
   end
 
   def client_post_pull_requests(annotation)
-    puts "⚠️ #{pull_request_endpoint_url}"
     @client.post(
       "#{pull_request_endpoint_url}",
       create_pull_request_comment_payload(annotation)
@@ -81,18 +80,31 @@ class GithubCheckRunService
   end
 
   def create_pull_request_comment_payload(annotation)
-    title = annotation['title']
     {
       commit_id: @github_data[:latest_commit_sha],
       path: annotation["path"],
-      body: "#{confidence_level_map(title)} #{title} : #{annotation['message']}",
+      body: comment_body_generator(annotation),
       start_side: "RIGHT",
       line: annotation['start_line'],
     }
   end
 
+  def get_confidence_level(title)
+    title.split('-')[0].strip
+  end
+
   def confidence_level_map(title)
-    level = title.split('-')[0].strip
+    level = get_confidence_level(title)
     EMOJI_MAPPER[level.to_sym] || "⁉️"
+  end
+
+  def comment_body_generator(annotation)
+    title = annotation['title']
+    "#{confidence_level_map(title)} **Potential Vulnerability Detected**<br /><br />" +
+    "**Confidence level**: #{get_confidence_level(title)}<br />" +
+    "**Type**: #{title}<br />" +
+    "**Description**: #{annotation['message']}<br />" +
+    "**More information**: #{BRAKEMAN_URL}<br />" +
+    "#{@github_data[:custom_message_content]}"
   end
 end
