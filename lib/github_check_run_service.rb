@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 class GithubCheckRunService
-  CHECK_NAME = 'Brakeman'
-  MAX_ANNOTATIONS_SIZE = 50
+  CHECK_NAME = 'Brakeman'.freeze
+  MAX_ANNOTATIONS_SIZE = 50.freeze
+  EMOJI_MAPPER = {"High":"🚨", "Medium":"⚠️", "Weak":"❔"}.freeze
 
   def initialize(report, github_data, report_adapter)
     @report = report
@@ -23,7 +24,7 @@ class GithubCheckRunService
     result = {}
     @annotations.each_slice(MAX_ANNOTATIONS_SIZE) do |annotation|
       result.merge(client_patch_annotations(id, annotation))
-      result.merge(client_post_pull_requests(annotation))
+      result.merge(client_post_pull_requests(annotation[0]))
     end
     result
   end
@@ -37,12 +38,15 @@ class GithubCheckRunService
     )
   end
 
-  def client_post_pull_requests(annotations)
+  def client_post_pull_requests(annotation)
+    puts "⚠️ #{pull_request_endpoint_url}"
     @client.post(
       "#{pull_request_endpoint_url}",
-      create_pull_request_comment_payload(annotations)
+      create_pull_request_comment_payload(annotation)
     )
   end
+
+  private
 
   def annotation_endpoint_url
     "/repos/#{@github_data[:owner]}/#{@github_data[:repo]}/check-runs"
@@ -76,18 +80,19 @@ class GithubCheckRunService
     }
   end
 
-  def create_pull_request_comment_payload(annotations)
+  def create_pull_request_comment_payload(annotation)
+    title = annotation['title']
     {
-      name: CHECK_NAME,
-      head_sha: @github_data[:sha],
-      status: 'completed',
-      completed_at: Time.now.iso8601,
-      conclusion: @conclusion,
-      output: {
-        title: CHECK_NAME,
-        summary: @summary,
-        annotations: annotations
-      }
+      commit_id: @github_data[:sha],
+      path: annotation["path"],
+      body: "#{confidence_level_map(title)} #{title} : #{annotation['message']}",
+      start_side: "RIGHT",
+      line: annotation['start_line'],
     }
+  end
+
+  def confidence_level_map(title)
+    level = title.split('-')[0].strip
+    EMOJI_MAPPER[level.to_sym] || "⁉️"
   end
 end
