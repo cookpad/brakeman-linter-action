@@ -83,7 +83,7 @@ class GithubCheckRunService
   def create_pull_request_comment_payload(annotation)
     title = annotation['title']
     {
-      commit_id: @github_data[:sha],
+      commit_id: @github_data[:latest_commit_sha],
       path: annotation["path"],
       body: "#{confidence_level_map(title)} #{title} : #{annotation['message']}",
       start_side: "RIGHT",

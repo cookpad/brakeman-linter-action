@@ -60,6 +60,7 @@ jobs:
       uses: cookpad/brakeman-linter-action@v1.0.4
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        GITHUB_LATEST_SHA: ${{ github.event.pull_request.head.sha }}
 ```
 
 ## Screenshots
