@@ -93,18 +93,22 @@ class GithubCheckRunService
     title.split('-')[0].strip
   end
 
+  def get_potential_vuln_type(title)
+    title.split('-')[1].strip
+  end
+
   def confidence_level_map(title)
-    level = get_confidence_level(title)
-    EMOJI_MAPPER[level.to_sym] || "⁉️"
+    EMOJI_MAPPER[get_confidence_level(title).to_sym] || "⁉️"
   end
 
   def comment_body_generator(annotation)
     title = annotation['title']
-    "#{confidence_level_map(title)} **Potential Vulnerability Detected**<br /><br />" +
+    emoji = confidence_level_map(title)
+    "#{emoji} **Potential Vulnerability Detected** #{emoji}<br /><br />" +
     "**Confidence level**: #{get_confidence_level(title)}<br />" +
-    "**Type**: #{title}<br />" +
+    "**Type**: #{get_potential_vuln_type(title)}<br />" +
     "**Description**: #{annotation['message']}<br />" +
-    "**More information**: #{BRAKEMAN_URL}<br />" +
+    "**More information available at**: #{BRAKEMAN_URL}<br />" +
     "#{@github_data[:custom_message_content]}"
   end
 end
