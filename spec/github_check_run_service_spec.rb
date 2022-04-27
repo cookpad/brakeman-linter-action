@@ -37,4 +37,27 @@ describe GithubCheckRunService do
       service.run
     end
   end
+
+  context 'pr comments' do
+    it 'comments on a pr' do
+      stub_request(:any, 'https://api.github.com/repos/owner/repository_name/check-runs')
+        .to_return(status: 200, body: '{"id": "id"}')
+
+      stub_request(:any, 'https://api.github.com/repos/owner/repository_name/check-runs/id')
+        .to_return(status: 200, body: '{"id": "id"}')
+
+      stub_request(:any, 'https://api.github.com/repos/owner/repository_name/pulls/10/comments')
+        .to_return(status: 200, body: '{"id": "id"}')
+      expected_comment_body = {
+                                "annotation_level"=>"warning",
+                                "end_line"=>6,
+                                "message"=>"`Marshal.load` called with parameter value",
+                                "path"=>"app/controllers/password_resets_controller.rb", 
+                                "start_line"=>6,
+                                "title"=>"Medium - Deserialize"
+                              }
+      expect(service).to receive(:client_post_pull_requests).with(expected_comment_body)
+      service.run
+    end
+  end
 end
