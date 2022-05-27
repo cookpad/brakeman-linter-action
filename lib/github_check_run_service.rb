@@ -45,7 +45,14 @@ class GithubCheckRunService
         create_pull_request_comment_payload(annotation)
       )
     rescue GithubClient::IssueExistsOutsideOfPullRequestError => e
-      puts "⚠️ Brakeman has detected an issue elsewhere, outside of the Pull Request ⚠️"
+      client_post_pull_request_for_issue_outside_of_pr(annotation)
+    end
+
+    def client_post_pull_request_for_issue_outside_of_pr(annotation)
+      @client.post(
+        pull_request_endpoint_url.to_s,
+        create_issue_in_repo_but_not_pr_comment_payload(annotation)
+      )
     end
 
     def annotation_endpoint_url
@@ -90,6 +97,12 @@ class GithubCheckRunService
       }
     end
 
+    def create_issue_in_repo_but_not_pr_comment_payload(annotation)
+      {
+        body: pr_comment_body_generator(annotation)
+      }
+    end
+
     def get_confidence_level(title)
       title.split("-")[0].strip
     end
@@ -111,5 +124,22 @@ class GithubCheckRunService
         "**Description**: #{annotation['message']}<br />" +
         "**More information available at**: #{BRAKEMAN_URL}<br />" +
         (@github_data[:custom_message_content]).to_s
+    end
+
+    def pr_comment_body_generator(annotation)
+      title = annotation["title"]
+      emoji = confidence_level_map(title)
+      body = ("#{emoji} **Potential Vulnerability Detected Outside Of PR** #{emoji}<br /><br />" +
+        "You might not need to deal with this, but be aware that it exists in the codebase.<br />" +
+        "**Confidence level**: #{get_confidence_level(title)}<br />" +
+        "**Type**: #{get_potential_vuln_type(title)}<br />" +
+        "**Description**: #{annotation['message']}<br />" +
+        "**More information available at**: #{BRAKEMAN_URL}<br />" +
+        "**Location**: #{annotation["path"]}:#{annotation["start_line"]}<br />")
+        if @github_data[:custom_message_content]
+          body + @github_data[:custom_message_content]
+        else
+          body
+        end
     end
 end
