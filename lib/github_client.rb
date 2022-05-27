@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 class GithubClient
-  class IssueExistsOutsideOfPullRequestError < StandardError
-  end
-
   def initialize(github_token, user_agent: "ruby")
     @github_token = github_token
     @user_agent = user_agent
@@ -36,7 +33,6 @@ class GithubClient
       http = Net::HTTP.new("api.github.com", 443)
       http.use_ssl = true
       response = yield(http)
-      raise IssueExistsOutsideOfPullRequestError if response.body.include? "pull_request_review_thread.diff_hunk"
       raise "#{response.message}: #{response.body}" if response.code.to_i >= 300
 
       JSON.parse(response.body)
