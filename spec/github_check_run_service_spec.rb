@@ -64,9 +64,8 @@ describe GithubCheckRunService do
   # Eventually we'll have this comment, but for now, we don't want to fail the build
   context "an issue in the codebase but not in the PR" do
     it "does not fail the build" do
-      comment_text = "⚠️ **Potential Vulnerability Detected Outside Of PR** ⚠️<br /><br />You might not need to deal with this, but be aware that it exists in the codebase.<br />**Confidence level**: Medium<br />**Type**: Deserialize<br />**Description**: `Marshal.load` called with parameter value<br />**More information available at**: https://brakemanscanner.org/docs/warning_types/<br />**Location**: app/controllers/password_resets_controller.rb:6<br />"
       expected_pr_comment_body = {
-        :body => "⚠️ **Potential Vulnerability Detected Outside Of PR** ⚠️<br /><br />You might not need to deal with this, but be aware that it exists in the codebase.<br />**Confidence level**: Medium<br />**Type**: Deserialize<br />**Description**: `Marshal.load` called with parameter value<br />**More information available at**: https://brakemanscanner.org/docs/warning_types/<br />**Location**: app/controllers/password_resets_controller.rb:6<br />"
+        body: "⚠️ **Potential Vulnerability Detected Outside Of PR** ⚠️<br /><br />You might not need to deal with this, but be aware that it exists in the codebase.<br />**Confidence level**: Medium<br />**Type**: Deserialize<br />**Description**: `Marshal.load` called with parameter value<br />**More information available at**: https://brakemanscanner.org/docs/warning_types/<br />**Location**: app/controllers/password_resets_controller.rb:6<br />"
       }
       expected_file_comment_body = {
         "annotation_level" => "warning",
@@ -84,15 +83,16 @@ describe GithubCheckRunService do
         to_return(status: 200, body: '{"id": "id"}')
 
       stub_request(:any, "https://api.github.com/repos/owner/repository_name/pulls/10/comments").
-          to_return(status: 422, body: '{"message":"Validation Failed","errors":[{"resource":"PullRequestReviewComment","code":"invalid","field":"pull_request_review_thread.path"},{"resource":"PullRequestReviewComment","code":"missing_field","field":"pull_request_review_thread.diff_hunk"}],"documentation_url":"https://docs.github.com/rest"}').
-          times(1)
+        to_return(status: 422, body: '{"message":"Validation Failed","errors":[{"resource":"PullRequestReviewComment","code":"invalid","field":"pull_request_review_thread.path"},{"resource":"PullRequestReviewComment","code":"missing_field","field":"pull_request_review_thread.diff_hunk"}],"documentation_url":"https://docs.github.com/rest"}').
+        times(1)
 
       stub_request(:post, "https://api.github.com/repos/owner/repository_name/pulls/10/comments").
-                  with(expected_pr_comment_body).
-                  to_return(status: 200, body: '{"id": "id"}').
-                  times(1)
+        with(expected_pr_comment_body).
+        to_return(status: 200, body: '{"id": "id"}').
+        times(1)
 
-      expect(service).to receive(:client_post_pull_request_for_issue_outside_of_pr).with(expected_file_comment_body).once
+      expect(service).to receive(:client_post_pull_request_for_issue_outside_of_pr).with(expected_file_comment_body).once.
+        and_return(expected_pr_comment_body)
       expect { service.run }.not_to raise_error
     end
   end
