@@ -44,7 +44,7 @@ class GithubCheckRunService
         pull_request_endpoint_url.to_s,
         create_pull_request_comment_payload(annotation)
       )
-    rescue GithubClient::IssueExistsOutsideOfPullRequestError => e
+    rescue GithubClient::IssueExistsOutsideOfPullRequestError
       puts "⚠️ Brakeman has detected an issue elsewhere, outside of the Pull Request ⚠️"
     end
 
