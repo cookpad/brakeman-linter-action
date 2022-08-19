@@ -6,7 +6,9 @@ describe GithubCheckRunService do
   let(:no_findings_brakeman_report) { JSON(File.read("./spec/fixtures/no_findings_report.json")) }
   let(:brakeman_report) { JSON(File.read("./spec/fixtures/report.json")) }
   let(:github_data) { { sha: "sha", token: "token", owner: "owner", repo: "repository_name", pull_request_number: "10" } }
+  let(:non_pr_github_data) { { sha: "sha", token: "token", owner: "owner", repo: "repository_name" } }
   let(:service) { GithubCheckRunService.new(brakeman_report, github_data, ReportAdapter) }
+  let(:non_pr_service) { GithubCheckRunService.new(brakeman_report, non_pr_github_data, ReportAdapter) }
 
   it "#run" do
     stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
@@ -75,6 +77,17 @@ describe GithubCheckRunService do
 
       expect(service).to receive(:client_post_pull_requests).with(expected_comment_body)
       service.run
+    end
+
+    it "skips comments for non pr events" do
+      stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs").
+        to_return(status: 200, body: '{"id": "id"}')
+
+      stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
+        to_return(status: 200, body: '{"id": "id"}')
+
+      expect(non_pr_service).not_to receive(:client_post_pull_requests)
+      non_pr_service.run
     end
   end
 
