@@ -13,18 +13,18 @@ jobs:
   brakeman:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Ruby 2.7.5
+      - uses: actions/checkout@v4
+      - name: Set up Ruby 3.3.5
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.7.5
+          ruby-version: 3.3.5
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
       - name: Brakeman report
         run: |
           bundle exec brakeman -A -q --force -f json -o tmp/${{ github.event.pull_request.head.sha }}-brakeman.json
       - name: Send Brakeman report to Github if it has warnings
         if: failure()
-        uses: cookpad/brakeman-linter-action@v2.0.0
+        uses: cookpad/brakeman-linter-action@v2
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           REPORT_PATH: tmp/${{ github.event.pull_request.head.sha }}-brakeman.json

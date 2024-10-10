@@ -17,11 +17,11 @@ jobs:
     name: Rspec Test Action
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@master
-      - name: Set up Ruby 2.7.5
+      - uses: actions/checkout@4
+      - name: Set up Ruby 3.3.5
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.7.5
+          ruby-version: 3.3.5
       - name: Bundle
         run: |
           gem install bundler
