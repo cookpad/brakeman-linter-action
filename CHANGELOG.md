@@ -2,7 +2,7 @@
 
 ## v2.1.0
 
-- Shows a relevant error when an issue is detected outside the current PR 
+- Shows a relevant error when an issue is detected outside the current PR
 - Does not run forever when there aren't any annotations (thanks @dlackty!)
 
 ## v2.0.0
