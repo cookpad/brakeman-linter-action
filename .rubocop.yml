@@ -4,8 +4,9 @@ AllCops:
   NewCops: enable
   Exclude:
     - 'spec/fixtures/*'
+  TargetRubyVersion: 3
 
-# https://github.com/cookpad/global-style-guides/blob/main/.rubocop.ruby.yml 
+# https://github.com/cookpad/global-style-guides/blob/main/.rubocop.ruby.yml
 
 Bundler/OrderedGems:
   ConsiderPunctuation: true
