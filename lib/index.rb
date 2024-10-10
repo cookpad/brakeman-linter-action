@@ -3,21 +3,26 @@
 require "net/http"
 require "json"
 require "time"
-require_relative "./report_adapter"
-require_relative "./github_check_run_service"
-require_relative "./github_client"
+require_relative "report_adapter"
+require_relative "github_check_run_service"
+require_relative "github_client"
 
 def read_json(path)
   JSON.parse(File.read(path))
 end
 
-project_path = ENV["PROJECT_PATH"].nil? ? ENV["GITHUB_WORKSPACE"] : "#{ENV['GITHUB_WORKSPACE']}/#{ENV['PROJECT_PATH']}"
+project_path = if ENV["PROJECT_PATH"].nil?
+                 ENV.fetch("GITHUB_WORKSPACE",
+                   nil)
+               else
+                 "#{ENV.fetch('GITHUB_WORKSPACE', nil)}/#{ENV['PROJECT_PATH']}"
+               end
 
 @event_json = read_json(ENV["GITHUB_EVENT_PATH"]) if ENV["GITHUB_EVENT_PATH"]
 @github_data = {
-  sha: ENV["GITHUB_SHA"],
-  latest_commit_sha: ENV["GITHUB_LATEST_SHA"],
-  token: ENV["GITHUB_TOKEN"],
+  sha: ENV.fetch("GITHUB_SHA", nil),
+  latest_commit_sha: ENV.fetch("GITHUB_LATEST_SHA", nil),
+  token: ENV.fetch("GITHUB_TOKEN", nil),
   owner: ENV["GITHUB_REPOSITORY_OWNER"] || @event_json.dig("repository", "owner", "login"),
   repo: ENV["GITHUB_REPOSITORY_NAME"] || @event_json.dig("repository", "name"),
   pull_request_number: ENV["GITHUB_PULL_REQUEST_NUMBER"] || @event_json.dig("pull_request", "number"),
