@@ -17,7 +17,7 @@ jobs:
     name: Rspec Test Action
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@4
+      - uses: actions/checkout@v4
       - name: Set up Ruby 3.3.5
         uses: ruby/setup-ruby@v1
         with:
