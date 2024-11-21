@@ -28,7 +28,9 @@ class GithubCheckRunService
       @annotations.each_slice(MAX_ANNOTATIONS_SIZE) do |annotation|
         result.merge(client_patch_annotations(id, annotation))
         # Don't need to merge twice
-        client_post_pull_requests(annotation[0])
+        if @github_data[:pull_request_number] && !@github_data[:pull_request_number].empty?
+          client_post_pull_requests(annotation[0])
+        end
       end
     end
     result
