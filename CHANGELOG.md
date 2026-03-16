@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+- Adds support for ruby 4.0.1 and latest brakeman
+- Adds support for node 24 in github actions
+- Adds support for synchronize event in github actions
+
 ## v2.1.0
 
 - Shows a relevant error when an issue is detected outside the current PR
