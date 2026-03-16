@@ -74,7 +74,7 @@ jobs:
           bundle exec brakeman -A -q --force -f json -o tmp/${{ github.event.pull_request.head.sha || github.sha }}-brakeman.json
       - name: Send Brakeman report to Github if it has warnings
         if: failure()
-        uses: cookpad/brakeman-linter-action@v2.3.0-rc.1
+        uses: ./
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           REPORT_PATH: tmp/${{ github.event.pull_request.head.sha || github.sha }}-brakeman.json
