@@ -17,12 +17,15 @@ jobs:
   test:
     name: Rspec Test Action
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        ruby-version: ["3.3", "4.0"]
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Ruby 4.0.1
+      - name: Set up Ruby ${{ matrix.ruby-version }}
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 4.0.1
+          ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
       - name: Run Rspec
         run: bundle exec rspec
