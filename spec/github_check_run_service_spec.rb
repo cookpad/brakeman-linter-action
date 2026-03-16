@@ -6,7 +6,7 @@ describe GithubCheckRunService do
   let(:no_findings_brakeman_report) { JSON(File.read("./spec/fixtures/no_findings_report.json")) }
   let(:brakeman_report) { JSON(File.read("./spec/fixtures/report.json")) }
   let(:github_data) { { sha: "sha", token: "token", owner: "owner", repo: "repository_name", pull_request_number: "10" } }
-  let(:service) { GithubCheckRunService.new(brakeman_report, github_data, ReportAdapter) }
+  let(:service) { described_class.new(brakeman_report, github_data, ReportAdapter) }
 
   it "#run" do
     stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
@@ -30,7 +30,7 @@ describe GithubCheckRunService do
       stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs").
         to_return(status: 200, body: '{"id": "id"}')
 
-      no_findings_service = GithubCheckRunService.new(no_findings_brakeman_report, github_data, ReportAdapter)
+      no_findings_service = described_class.new(no_findings_brakeman_report, github_data, ReportAdapter)
       output = no_findings_service.run
       expect(output).to eq({})
     end
@@ -45,9 +45,8 @@ describe GithubCheckRunService do
         to_return(status: 200, body: '{"id": "id"}')
 
       stub_const("GithubCheckRunService::MAX_ANNOTATIONS_SIZE", 2)
-      allow(service).to receive(:client_patch_annotations).and_return({})
       expect(service).to receive(:client_patch_annotations).exactly(13).times
-      allow(service).to receive(:client_post_pull_requests).and_return({})
+      allow(service).to receive_messages(client_patch_annotations: {}, client_post_pull_requests: {})
       expect(service).to receive(:client_post_pull_requests).exactly(13).times
       service.run
     end

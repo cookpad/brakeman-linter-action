@@ -117,6 +117,6 @@ class GithubCheckRunService
         "**Type**: #{get_potential_vuln_type(title)}<br />" +
         "**Description**: #{annotation['message']}<br />" +
         "**More information available at**: #{BRAKEMAN_URL}<br />" +
-        (@github_data[:custom_message_content]).to_s
+        @github_data[:custom_message_content].to_s
     end
 end
