@@ -13,7 +13,7 @@ regardless of context.
 
 These are the (required or recommended) options you can set for the runner.
 
-- GITHUB_TOKEN (required): the [github token](https://docs.github.com/en/actions/security-guides/automatic-token-authentication), naturally :
+- GITHUB_TOKEN (required): the [github token](https://docs.github.com/en/actions/security-guides/automatic-token-authentication), naturally :)
 - REPORT_PATH: Where on the action runner you want the report to go, e.g. "/tmp/report.json". If not set, just outputs a json string.
 - PROJECT_PATH: The path of the project you want to scan (in case you have multiple apps in a repo). Defaults to the value of the [GITHUB_WORKSPACE](https://docs.github.com/en/actions/learn-github-actions/environment-variables) envvar.
 - GITHUB_LATEST_SHA: recommend setting this, it tells the runner where to put review comments. Easiest set as  `${{ github.event.pull_request.head.sha }}`
