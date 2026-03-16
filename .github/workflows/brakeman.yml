@@ -13,7 +13,7 @@ jobs:
   brakeman:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Ruby 4.0.1
         uses: ruby/setup-ruby@v1
         with:
@@ -24,7 +24,7 @@ jobs:
           bundle exec brakeman -A -q --force -f json -o tmp/${{ github.event.pull_request.head.sha }}-brakeman.json
       - name: Send Brakeman report to Github if it has warnings
         if: failure()
-        uses: cookpad/brakeman-linter-action@v2.2.0-rc
+        uses: cookpad/brakeman-linter-action@v2.3.0-rc.1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           REPORT_PATH: tmp/${{ github.event.pull_request.head.sha }}-brakeman.json
