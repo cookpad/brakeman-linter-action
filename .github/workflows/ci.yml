@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  rubocop:
+    name: RuboCop
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Run RuboCop
+        run: bundle exec rubocop
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'pull_request'
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v6
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+
+  test:
+    name: RSpec (${{ matrix.ruby-version }})
+    runs-on: ubuntu-24.04
+    needs: [rubocop, dependency-review]
+    if: always() && needs.rubocop.result == 'success' && (needs.dependency-review.result == 'success' || needs.dependency-review.result == 'skipped')
+    strategy:
+      matrix:
+        ruby-version: ["3.3", "4.0"]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Ruby ${{ matrix.ruby-version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+      - name: Run RSpec
+        run: bundle exec rspec
+
+  brakeman:
+    name: Security checks (dogfooding)
+    runs-on: ubuntu-24.04
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+      - name: Brakeman report
+        run: |
+          bundle exec brakeman -A -q --force -f json -o tmp/${{ github.event.pull_request.head.sha || github.sha }}-brakeman.json
+      - name: Send Brakeman report to Github if it has warnings
+        if: failure()
+        uses: ./
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          REPORT_PATH: tmp/${{ github.event.pull_request.head.sha || github.sha }}-brakeman.json
+          GITHUB_LATEST_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          CUSTOM_MESSAGE_CONTENT: "Please address this issue before merging.<br />Thank you for improving our security!"

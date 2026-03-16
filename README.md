@@ -6,7 +6,7 @@ You can read more about Brakeman itself [here](https://github.com/presidentbeef/
 
 This action helps make sure that brakeman results get accurately added to pull requests, in the event of a new issue.
 
-Currently we recommend hardcoding the brakeman version (e.g. 5.2.2) to prevent the unintended consequences of pulling down the latest version
+Currently we recommend hardcoding the brakeman version (e.g. 8.0.4) to prevent the unintended consequences of pulling down the latest version
 regardless of context.
 
 ## Config options
@@ -23,7 +23,7 @@ These are the (required or recommended) options you can set for the runner.
 
 ```yml
 - name: Brakeman
-  uses: cookpad/brakeman-linter-action@v2.1.0
+  uses: cookpad/brakeman-linter-action@v2.2.0
   env:
     GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 ```
@@ -33,12 +33,12 @@ These are the (required or recommended) options you can set for the runner.
 ```yml
 - name: Install gems
   run: |
-    gem install brakeman -v 5.2.2
+    gem install brakeman -v 8.0.4
 - name: brakeman report
   run: |
     brakeman -f json > tmp/brakeman.json || exit 0
 - name: Brakeman
-  uses: cookpad/brakeman-linter-action@v2.1.0
+  uses: cookpad/brakeman-linter-action@v2.2.0
   env:
     GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
     REPORT_PATH: tmp/brakeman.json
@@ -48,7 +48,7 @@ These are the (required or recommended) options you can set for the runner.
 
 ```yml
 - name: Brakeman
-  uses: cookpad/brakeman-linter-action@v2.1.0
+  uses: cookpad/brakeman-linter-action@v2.2.0
   env:
     GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
     PROJECT_PATH: my_rails_app
@@ -63,11 +63,11 @@ on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v1
     - name: Brakeman
-      uses: cookpad/brakeman-linter-action@v2.1.0
+      uses: cookpad/brakeman-linter-action@v2.2.0
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         GITHUB_LATEST_SHA: ${{ github.event.pull_request.head.sha }}

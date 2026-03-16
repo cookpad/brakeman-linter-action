@@ -22,11 +22,9 @@ class GithubCheckRunService
     @conclusion = @report_adapter.conslusion(@report)
 
     result = {}
-    if @annotations.empty?
-      result
-    else
+    unless @annotations.empty?
       @annotations.each_slice(MAX_ANNOTATIONS_SIZE) do |annotation|
-        result.merge(client_patch_annotations(id, annotation))
+        result.merge!(client_patch_annotations(id, annotation))
         # Don't need to merge twice
         client_post_pull_requests(annotation[0])
       end
@@ -117,6 +115,6 @@ class GithubCheckRunService
         "**Type**: #{get_potential_vuln_type(title)}<br />" +
         "**Description**: #{annotation['message']}<br />" +
         "**More information available at**: #{BRAKEMAN_URL}<br />" +
-        (@github_data[:custom_message_content]).to_s
+        @github_data[:custom_message_content].to_s
     end
 end

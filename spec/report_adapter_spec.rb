@@ -15,7 +15,7 @@ describe ReportAdapter do
     File.read("./spec/fixtures/output/summary.md")
   end
 
-  let(:adapter) { ReportAdapter }
+  let(:adapter) { described_class }
 
   it ".conclusion" do
     result = adapter.conslusion(brakeman_report)
