@@ -1,6 +1,6 @@
-FROM ruby:3.3.5-alpine
+FROM ruby:4.0.1-alpine
 
-RUN gem install brakeman -v 6.2.1
+RUN gem install brakeman -v 8.0.4
 
 COPY lib /action/lib
 
