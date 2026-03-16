@@ -10,6 +10,7 @@ group :development, :test do
 end
 
 group :test do
+  # this is needed because Ruby 4 no longer ships ostruct by default
   gem "ostruct"
   gem "pry"
   gem "rexml", ">= 3.3.9"
