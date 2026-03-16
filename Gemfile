@@ -9,6 +9,7 @@ group :development, :test do
 end
 
 group :test do
+  gem "ostruct"
   gem "pry"
   gem "rexml", ">= 3.3.9"
   gem "rspec"
