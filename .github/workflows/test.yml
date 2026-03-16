@@ -15,16 +15,13 @@ permissions:
 jobs:
   test:
     name: Rspec Test Action
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Ruby 3.3.5
+      - name: Set up Ruby 4.0.1
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.3.5
-      - name: Bundle
-        run: |
-          gem install bundler
-          bundle install --jobs 4 --retry 3
+          ruby-version: 4.0.1
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
       - name: Run Rspec
         run: rspec
