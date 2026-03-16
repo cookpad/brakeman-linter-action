@@ -69,12 +69,12 @@ jobs:
           bundler-cache: true
       - name: Brakeman report
         run: |
-          bundle exec brakeman -A -q --force -f json -o tmp/${{ github.event.pull_request.head.sha }}-brakeman.json
+          bundle exec brakeman -A -q --force -f json -o tmp/${{ github.event.pull_request.head.sha || github.sha }}-brakeman.json
       - name: Send Brakeman report to Github if it has warnings
         if: failure()
         uses: cookpad/brakeman-linter-action@v2.3.0-rc.1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          REPORT_PATH: tmp/${{ github.event.pull_request.head.sha }}-brakeman.json
-          GITHUB_LATEST_SHA: ${{ github.event.pull_request.head.sha }}
+          REPORT_PATH: tmp/${{ github.event.pull_request.head.sha || github.sha }}-brakeman.json
+          GITHUB_LATEST_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           CUSTOM_MESSAGE_CONTENT: "Please address this issue before merging.<br />Thank you for improving our security!"
