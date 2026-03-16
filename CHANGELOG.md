@@ -1,10 +1,17 @@
 # Changelog
 
-## [Unreleased]
+## v2.3.0
 
-- Adds support for ruby 4.0.1 and latest brakeman
-- Adds support for node 24 in github actions
-- Adds support for synchronize event in github actions
+- Adds support for Ruby 4.0.1 and Ruby 3.3 (test matrix now covers both)
+- Updates to latest Brakeman
+- Consolidates CI workflows into a single `ci.yml` with enforced job ordering (rubocop + dependency-review → tests → brakeman dogfooding)
+- Fixes RuboCop failing in CI due to vendored gems being scanned (`vendor/` is now excluded)
+- Adds support for Node 24 in GitHub Actions
+- Adds support for `synchronize` event in GitHub Actions
+
+## v2.2.0
+
+- Update Dockerfile ruby and brakeman versions
 
 ## v2.1.0
 
