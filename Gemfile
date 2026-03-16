@@ -10,6 +10,7 @@ end
 
 group :test do
   gem "pry"
+  gem "rexml", ">= 3.3.9"
   gem "rspec"
   gem "webmock"
 end
