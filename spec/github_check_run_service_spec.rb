@@ -8,7 +8,7 @@ describe GithubCheckRunService do
   let(:github_data) { { sha: "sha", token: "token", owner: "owner", repo: "repository_name", pull_request_number: "10" } }
   let(:service) { described_class.new(brakeman_report, github_data, ReportAdapter) }
 
-  it "#run" do
+  it "#run" do # rubocop:disable RSpec/ExampleLength
     stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
       to_return(status: 200, body: "{}")
 
@@ -22,8 +22,8 @@ describe GithubCheckRunService do
     expect(output).to be_a(Hash)
   end
 
-  context "no findings report" do
-    it "does not run forever on a report with no findings" do
+  context "when there are no findings" do
+    it "does not run forever on a report with no findings" do # rubocop:disable RSpec/ExampleLength
       stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
         to_return(status: 200, body: "{}")
 
@@ -36,8 +36,8 @@ describe GithubCheckRunService do
     end
   end
 
-  context "annotation limit set" do
-    it "updates the check run multiple times" do
+  context "when the annotation limit is set" do
+    it "updates the check run multiple times" do # rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations
       stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs").
         to_return(status: 200, body: '{"id": "id"}')
 
@@ -45,15 +45,15 @@ describe GithubCheckRunService do
         to_return(status: 200, body: '{"id": "id"}')
 
       stub_const("GithubCheckRunService::MAX_ANNOTATIONS_SIZE", 2)
-      expect(service).to receive(:client_patch_annotations).exactly(13).times
       allow(service).to receive_messages(client_patch_annotations: {}, client_post_pull_requests: {})
-      expect(service).to receive(:client_post_pull_requests).exactly(13).times
       service.run
+      expect(service).to have_received(:client_patch_annotations).exactly(13).times
+      expect(service).to have_received(:client_post_pull_requests).exactly(13).times
     end
   end
 
-  context "pr comments" do
-    it "comments on a pr" do
+  context "when posting PR comments" do
+    it "comments on a pr" do # rubocop:disable RSpec/ExampleLength
       stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs").
         to_return(status: 200, body: '{"id": "id"}')
 
@@ -72,14 +72,15 @@ describe GithubCheckRunService do
         "title" => "Medium - Deserialize"
       }
 
-      expect(service).to receive(:client_post_pull_requests).with(expected_comment_body)
+      allow(service).to receive(:client_post_pull_requests)
       service.run
+      expect(service).to have_received(:client_post_pull_requests).with(expected_comment_body)
     end
   end
 
   # Eventually we'll have this comment, but for now, we don't want to fail with a mysterious github error
-  context "an issue in the codebase but not in the PR" do
-    it "does not fail the build" do
+  context "when an issue is in the codebase but not in the PR" do
+    it "does not fail the build" do # rubocop:disable RSpec/ExampleLength
       stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs").
         to_return(status: 200, body: '{"id": "id"}')
 

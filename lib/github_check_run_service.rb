@@ -22,9 +22,7 @@ class GithubCheckRunService
     @conclusion = @report_adapter.conslusion(@report)
 
     result = {}
-    if @annotations.empty?
-      result
-    else
+    unless @annotations.empty?
       @annotations.each_slice(MAX_ANNOTATIONS_SIZE) do |annotation|
         result.merge(client_patch_annotations(id, annotation))
         # Don't need to merge twice
