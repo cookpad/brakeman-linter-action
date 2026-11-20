@@ -1,15 +1,26 @@
 # frozen_string_literal: true
 
 require "net/http"
+require "open3"
 require "json"
 require "pathname"
 require "time"
 require_relative "report_adapter"
 require_relative "github_check_run_service"
 require_relative "github_client"
+require_relative "workflow_command"
 
 def read_json(path)
   JSON.parse(File.read(path))
+end
+
+def run_brakeman(dir)
+  stdout, stderr, status = Open3.capture3("brakeman", "-f", "json", chdir: dir)
+  JSON.parse(stdout)
+rescue JSON::ParserError
+  output = [stderr, stdout].map(&:strip).reject(&:empty?).join("\n").lines.last(20).join
+  message = "Brakeman did not produce a JSON report (exit status #{status.exitstatus}). Output:\n#{output}"
+  abort(WorkflowCommand.build(:error, message))
 end
 
 def non_empty_env(name)
@@ -24,7 +35,8 @@ def repo_relative_path(file, app_path:, project_path:)
 end
 
 if ENV["PROJECT_PATH"] && Pathname.new(ENV["PROJECT_PATH"]).absolute?
-  abort("::error::PROJECT_PATH must be relative to the repository root, got #{ENV['PROJECT_PATH'].inspect}")
+  message = "PROJECT_PATH must be relative to the repository root, got #{ENV['PROJECT_PATH'].inspect}"
+  abort(WorkflowCommand.build(:error, message))
 end
 
 project_path = if ENV["PROJECT_PATH"].nil?
@@ -42,7 +54,7 @@ commit_sha = non_empty_env("GITHUB_LATEST_SHA") ||
   sha: commit_sha,
   token: ENV.fetch("GITHUB_TOKEN", nil),
   owner: ENV["GITHUB_REPOSITORY_OWNER"] || @event_json.dig("repository", "owner", "login"),
-  repo: ENV["GITHUB_REPOSITORY_NAME"] || @event_json.dig("repository", "name"),
+  repo: @event_json.dig("repository", "name"),
   pull_request_number: non_empty_env("GITHUB_PULL_REQUEST_NUMBER") || @event_json.dig("pull_request", "number"),
   custom_message_content: ENV["CUSTOM_MESSAGE_CONTENT"] || ""
 }
@@ -51,7 +63,7 @@ commit_sha = non_empty_env("GITHUB_LATEST_SHA") ||
   if ENV["REPORT_PATH"]
     read_json(ENV["REPORT_PATH"])
   else
-    Dir.chdir(project_path) { JSON.parse(`brakeman -f json`) }
+    run_brakeman(project_path)
   end
 
 app_path = Pathname.new(@report.dig("scan_info", "app_path").to_s)

@@ -35,6 +35,26 @@ jobs:
           version: "1.32.0"
           advanced-security: "false"
 
+  docker:
+    name: Docker image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - name: Build image
+        run: docker build -t brakeman-linter-action:ci .
+      - name: Check Brakeman matches Gemfile.lock
+        run: |
+          expected="brakeman $(sed -n 's/^    brakeman (\(.*\))$/\1/p' Gemfile.lock)"
+          actual="$(docker run --rm --entrypoint brakeman brakeman-linter-action:ci --version)"
+          echo "expected: $expected, image: $actual"
+          test "$actual" = "$expected"
+      - name: Check development gems are not installed
+        run: docker run --rm --entrypoint sh brakeman-linter-action:ci -c '! gem list -i rubocop'
+      - name: Check the action script parses
+        run: docker run --rm --entrypoint ruby brakeman-linter-action:ci -c /action/lib/index.rb
+
   rubocop:
     name: RuboCop
     runs-on: ubuntu-24.04

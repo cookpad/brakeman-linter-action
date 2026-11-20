@@ -18,7 +18,7 @@ describe ReportAdapter do
   let(:adapter) { described_class }
 
   it ".conclusion" do
-    result = adapter.conslusion(brakeman_report)
+    result = adapter.conclusion(brakeman_report)
     expect(result).to eq("failure")
   end
 
@@ -30,7 +30,7 @@ describe ReportAdapter do
     end
 
     it "concludes as a failure" do
-      expect(adapter.conslusion(report_with_errors)).to eq("failure")
+      expect(adapter.conclusion(report_with_errors)).to eq("failure")
     end
 
     it "lists the scan errors in the summary" do
@@ -68,5 +68,16 @@ describe ReportAdapter do
   it ".annotations" do
     result = adapter.annotations(brakeman_report)
     expect(result).to eq(spec_annotations)
+  end
+
+  context "when a warning has no line number" do
+    let(:report_without_line) do
+      brakeman_report.tap { |report| report["warnings"].first.merge!("file" => "Gemfile", "line" => nil) }
+    end
+
+    it "annotates the first line of the file" do
+      annotation = adapter.annotations(report_without_line).first
+      expect(annotation).to include("path" => "Gemfile", "start_line" => 1, "end_line" => 1)
+    end
   end
 end

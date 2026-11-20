@@ -15,8 +15,13 @@
 - Fixes the action crashing on non-PR events (e.g. `push`), including when `GITHUB_PULL_REQUEST_NUMBER` is set to an empty value; PR comments are now only posted when the event has a pull request
 - Fixes PR comments failing when `GITHUB_LATEST_SHA` is not set; it now defaults to the pull request's head commit
 - Fixes annotations and PR comments pointing at the wrong files when `PROJECT_PATH` is set
+- Fixes warnings without a line number (e.g. some version checks that point at `Gemfile`) being sent with a null line, which GitHub rejects; they are now annotated on line 1 of the file
+- Fixes text from Brakeman output or GitHub API errors being able to start its own workflow command (e.g. `::add-mask::`) in the action log; all `::error::` and `::warning::` messages are now escaped
+- Reports a clear error with Brakeman's exit status and output when it fails to produce a JSON report, instead of a JSON parse error
 - Fixes absolute warning paths (from `brakeman --absolute-paths`) by making them relative to the report's `scan_info.app_path`
 - Attaches the check run to the pull request's head commit instead of the temporary merge commit, so it shows up on the PR
+- Documents `GITHUB_PULL_REQUEST_NUMBER`, which lets a workflow whose event has no pull request (e.g. `workflow_run`) post comments on a given PR together with `GITHUB_LATEST_SHA`
+- Installs Brakeman and its dependencies in the Docker image from `Gemfile.lock`, so they no longer resolve fresh on every build
 - Updates the action's Docker image to Ruby 4.0.10, which patches out "[ruby2shell](https://github.com/ruby/ruby/security/advisories/GHSA-34m4-m9fh-gqp5)", and Brakeman 8.1.1 for the same reason
 
 Behaviour changes:
@@ -25,6 +30,7 @@ Behaviour changes:
 - When `PROJECT_PATH` is set, warning paths are prefixed with it, including for reports supplied via `REPORT_PATH`.
 - An absolute `PROJECT_PATH` now stops the action with an error; it must be relative to the repository root.
 - A report with scan errors but no warnings now fails the check instead of passing.
+- Removed the undocumented `GITHUB_REPOSITORY_NAME` override. Results always go to the repository the workflow runs in; the owner already couldn't be changed, because `GITHUB_REPOSITORY_OWNER` is a built-in GitHub variable.
 
 Before releasing:
 

@@ -21,7 +21,7 @@ class GithubCheckRunService
     )["id"]
     @summary = @report_adapter.summary(@report)
     @annotations = @report_adapter.annotations(@report)
-    @conclusion = @report_adapter.conslusion(@report)
+    @conclusion = @report_adapter.conclusion(@report)
     upload_annotations(id)
     post_pull_request_comments
   end
@@ -40,7 +40,7 @@ class GithubCheckRunService
       changed_files = fetch_changed_files
       @existing_comments = fetch_existing_comments
     rescue GithubClient::RequestError => e
-      puts "::warning::Could not fetch pull request data, skipping PR comments: #{e.message}"
+      puts WorkflowCommand.build(:warning, "Could not fetch pull request data, skipping PR comments: #{e.message}")
     else
       file_list_complete = changed_files.size < PULL_REQUEST_FILES_LIMIT
       @annotations.each do |annotation|
@@ -78,7 +78,8 @@ class GithubCheckRunService
       puts "* Please check the results above to see where & what needs to be fixed.  *"
       puts "**************************************************************************"
     rescue GithubClient::RequestError => e
-      puts "::warning::Could not post PR comment on #{annotation['path']}:#{annotation['start_line']}: #{e.message}"
+      location = "#{annotation['path']}:#{annotation['start_line']}"
+      puts WorkflowCommand.build(:warning, "Could not post PR comment on #{location}: #{e.message}")
     end
 
     def fetch_all_pages(url)

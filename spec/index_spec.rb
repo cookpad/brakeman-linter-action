@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "./spec/spec_helper"
+require "open3"
 require "tmpdir"
 
 describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is a script, not a class
@@ -47,6 +48,44 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
     load "./lib/index.rb"
   end
 
+  context "when the action runs Brakeman itself" do
+    def brakeman_env
+      { "REPORT_PATH" => nil, "GITHUB_WORKSPACE" => tmpdir }
+    end
+
+    def brakeman_result(stdout, stderr, exitstatus)
+      [stdout, stderr, instance_double(Process::Status, exitstatus:)]
+    end
+
+    it "runs Brakeman in the workspace and reports its JSON output" do
+      allow(Open3).to receive(:capture3).
+        and_return(brakeman_result(File.read("./spec/fixtures/report.json"), "", 3))
+      run_action(brakeman_env)
+      expect(Open3).to have_received(:capture3).with("brakeman", "-f", "json", chdir: tmpdir)
+    end
+
+    it "stops with Brakeman's exit status and output when it doesn't produce JSON" do
+      allow(Open3).to receive(:capture3).and_return(brakeman_result("", "Please supply the path to a Rails application.", 4))
+      expect { run_action(brakeman_env) }.
+        to raise_error(SystemExit).
+        and output(/::error::Brakeman did not produce a JSON report \(exit status 4\).*Please supply the path/m).
+        to_stderr
+    end
+
+    it "doesn't let Brakeman's output start its own workflow command" do
+      allow(Open3).to receive(:capture3).and_return(brakeman_result("", "parse error near:\n::add-mask::hidden", 1))
+      expect { run_action(brakeman_env) }.
+        to raise_error(SystemExit).
+        and output(satisfy { |err| err.lines.none? { |line| line.start_with?("::add-mask::") } }).to_stderr
+    end
+  end
+
+  it "reports to the repository from the event even if GITHUB_REPOSITORY_NAME is set" do
+    stub_request(:any, %r{/repos/owner/other_repo/})
+    run_action("GITHUB_REPOSITORY_NAME" => "other_repo")
+    expect(a_request(:post, "https://api.github.com/repos/owner/repository_name/check-runs")).to have_been_made.once
+  end
+
   it "creates the check run on the PR head commit, not the merge commit" do
     run_action({})
     expect(
@@ -69,6 +108,12 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
     it "does not touch PR comments when GITHUB_PULL_REQUEST_NUMBER is empty" do
       run_action("GITHUB_PULL_REQUEST_NUMBER" => "")
       expect(a_request(:any, %r{/pulls/})).not_to have_been_made
+    end
+
+    it "comments on the PR given by GITHUB_PULL_REQUEST_NUMBER and GITHUB_LATEST_SHA" do
+      run_action("GITHUB_PULL_REQUEST_NUMBER" => "10", "GITHUB_LATEST_SHA" => "pr-head-sha")
+      expect(a_request(:post, comments_url).with(body: hash_including("commit_id" => "pr-head-sha"))).
+        to have_been_made.times(25)
     end
   end
 

@@ -62,7 +62,8 @@ class GithubClient
         return parse_response(response) unless wait
 
         retries += 1
-        puts "::warning::GitHub rate limit hit, retrying in #{wait}s (retry #{retries}/#{MAX_RETRIES})"
+        message = "GitHub rate limit hit, retrying in #{wait}s (retry #{retries}/#{MAX_RETRIES})"
+        puts WorkflowCommand.build(:warning, message)
         @seconds_waited += wait
         sleep(wait)
       end

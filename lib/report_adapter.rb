@@ -8,7 +8,7 @@ class ReportAdapter
     MAX_SUMMARY_BYTES = 65_535
     OMITTED_NOTICE_RESERVE = 100
 
-    def conslusion(report)
+    def conclusion(report)
       return CONCLUSION_TYPES[:failure] if security_warnings(report) > 0 || scan_errors(report).any?
 
       CONCLUSION_TYPES[:success]
@@ -21,10 +21,11 @@ class ReportAdapter
 
     def annotations(report)
       report["warnings"].map do |error|
+        line = error["line"] || 1
         {
           "path" => error["file"],
-          "start_line" => error["line"],
-          "end_line" => error["line"],
+          "start_line" => line,
+          "end_line" => line,
           "annotation_level" => ANNOTATION_LEVEL[:warning],
           "title" => "#{error['confidence']} - #{error['check_name']}",
           "message" => error["message"]
