@@ -15,6 +15,7 @@
 - Fixes the action crashing on non-PR events (e.g. `push`), including when `GITHUB_PULL_REQUEST_NUMBER` is set to an empty value; PR comments are now only posted when the event has a pull request
 - Fixes PR comments failing when `GITHUB_LATEST_SHA` is not set; it now defaults to the pull request's head commit
 - Fixes annotations and PR comments pointing at the wrong files when `PROJECT_PATH` is set
+- Fixes warnings without a line number (e.g. some version checks that point at `Gemfile`) being sent with a null line, which GitHub rejects; they are now annotated on line 1 of the file
 - Fixes absolute warning paths (from `brakeman --absolute-paths`) by making them relative to the report's `scan_info.app_path`
 - Attaches the check run to the pull request's head commit instead of the temporary merge commit, so it shows up on the PR
 - Updates the action's Docker image to Ruby 4.0.10, which patches out "[ruby2shell](https://github.com/ruby/ruby/security/advisories/GHSA-34m4-m9fh-gqp5)", and Brakeman 8.1.1 for the same reason

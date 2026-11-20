@@ -69,4 +69,15 @@ describe ReportAdapter do
     result = adapter.annotations(brakeman_report)
     expect(result).to eq(spec_annotations)
   end
+
+  context "when a warning has no line number" do
+    let(:report_without_line) do
+      brakeman_report.tap { |report| report["warnings"].first.merge!("file" => "Gemfile", "line" => nil) }
+    end
+
+    it "annotates the first line of the file" do
+      annotation = adapter.annotations(report_without_line).first
+      expect(annotation).to include("path" => "Gemfile", "start_line" => 1, "end_line" => 1)
+    end
+  end
 end

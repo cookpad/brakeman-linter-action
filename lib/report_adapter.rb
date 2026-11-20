@@ -21,10 +21,11 @@ class ReportAdapter
 
     def annotations(report)
       report["warnings"].map do |error|
+        line = error["line"] || 1
         {
           "path" => error["file"],
-          "start_line" => error["line"],
-          "end_line" => error["line"],
+          "start_line" => line,
+          "end_line" => line,
           "annotation_level" => ANNOTATION_LEVEL[:warning],
           "title" => "#{error['confidence']} - #{error['check_name']}",
           "message" => error["message"]
