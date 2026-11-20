@@ -22,6 +22,23 @@ describe ReportAdapter do
     expect(result).to eq("failure")
   end
 
+  context "when the scan has errors but no warnings" do
+    let(:report_with_errors) do
+      JSON(File.read("./spec/fixtures/no_findings_report.json")).merge(
+        "errors" => [{ "error" => "app/models/user.rb:3 :: parse error on value \"end\"", "location" => "x.rb:1" }]
+      )
+    end
+
+    it "concludes as a failure" do
+      expect(adapter.conslusion(report_with_errors)).to eq("failure")
+    end
+
+    it "lists the scan errors in the summary" do
+      expect(adapter.summary(report_with_errors)).
+        to include("**1 scan error(s)**", "- app/models/user.rb:3 :: parse error on value \"end\"")
+    end
+  end
+
   it ".summary" do
     result = adapter.summary(brakeman_report)
     expect(result).to eq(spec_summary)

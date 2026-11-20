@@ -7,13 +7,14 @@ class ReportAdapter
     ANNOTATION_LEVEL = { notice: "notice", warning: "warning", failure: "failure" }.freeze
 
     def conslusion(report)
-      return CONCLUSION_TYPES[:failure] if security_warnings(report) > 0
+      return CONCLUSION_TYPES[:failure] if security_warnings(report) > 0 || scan_errors(report).any?
 
       CONCLUSION_TYPES[:success]
     end
 
     def summary(report)
-      "**Brakeman Report**:\n#{security_warnings(report)} security warnings\n#{check_table(report)}"
+      "**Brakeman Report**:\n#{security_warnings(report)} security warnings\n#{check_table(report)}" \
+        "#{errors_list(report)}"
     end
 
     def annotations(report)
@@ -37,6 +38,18 @@ class ReportAdapter
 
       def uniq_checks(report)
         report["warnings"].map { |w| { check_name: w["check_name"], link: w["link"] } }.uniq { |w| w[:check_name] }
+      end
+
+      def errors_list(report)
+        errors = scan_errors(report)
+        return "" if errors.empty?
+
+        "\n**#{errors.size} scan error(s)** (Brakeman could not fully scan these):\n" +
+          errors.map { |error| "- #{error['error']}\n" }.join
+      end
+
+      def scan_errors(report)
+        report.fetch("errors", [])
       end
 
       def security_warnings(report)
