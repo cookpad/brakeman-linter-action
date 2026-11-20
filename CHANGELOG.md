@@ -25,6 +25,7 @@ Behaviour changes:
 - When `PROJECT_PATH` is set, warning paths are prefixed with it, including for reports supplied via `REPORT_PATH`.
 - An absolute `PROJECT_PATH` now stops the action with an error; it must be relative to the repository root.
 - A report with scan errors but no warnings now fails the check instead of passing.
+- Removed the undocumented `GITHUB_REPOSITORY_NAME` override. Results always go to the repository the workflow runs in; the owner already couldn't be changed, because `GITHUB_REPOSITORY_OWNER` is a built-in GitHub variable.
 
 Before releasing:
 

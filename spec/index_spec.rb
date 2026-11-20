@@ -47,6 +47,12 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
     load "./lib/index.rb"
   end
 
+  it "reports to the repository from the event even if GITHUB_REPOSITORY_NAME is set" do
+    stub_request(:any, %r{/repos/owner/other_repo/})
+    run_action("GITHUB_REPOSITORY_NAME" => "other_repo")
+    expect(a_request(:post, "https://api.github.com/repos/owner/repository_name/check-runs")).to have_been_made.once
+  end
+
   it "creates the check run on the PR head commit, not the merge commit" do
     run_action({})
     expect(
