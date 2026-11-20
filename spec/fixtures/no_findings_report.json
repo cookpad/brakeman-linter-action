@@ -2,7 +2,7 @@
   "scan_info": {
     "app_path": "/code/railsgoat",
     "rails_version": "6.0.0",
-    "security_warnings": 25,
+    "security_warnings": 0,
     "start_time": "2022-03-28 15:46:00 +0100",
     "end_time": "2022-03-28 15:46:00 +0100",
     "duration": 0.234591,

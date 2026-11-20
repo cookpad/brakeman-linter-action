@@ -23,16 +23,19 @@ describe GithubCheckRunService do
   end
 
   context "when there are no findings" do
-    it "does not run forever on a report with no findings" do # rubocop:disable RSpec/ExampleLength
+    it "completes the check run as a success" do # rubocop:disable RSpec/ExampleLength
       stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
         to_return(status: 200, body: "{}")
 
       stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs").
         to_return(status: 200, body: '{"id": "id"}')
 
-      no_findings_service = described_class.new(no_findings_brakeman_report, github_data, ReportAdapter)
-      output = no_findings_service.run
-      expect(output).to eq({})
+      described_class.new(no_findings_brakeman_report, github_data, ReportAdapter).run
+
+      expect(
+        a_request(:patch, "https://api.github.com/repos/owner/repository_name/check-runs/id").
+          with(body: hash_including("status" => "completed", "conclusion" => "success"))
+      ).to have_been_made.once
     end
   end
 
