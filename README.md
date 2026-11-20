@@ -35,10 +35,12 @@ These are the (required or recommended) options you can set for the runner.
 
 ```yml
 - name: Brakeman
-  uses: cookpad/brakeman-linter-action@v2.2.0
+  uses: cookpad/brakeman-linter-action@v3.0.0
   env:
     GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 ```
+
+Tags can be moved, so consider pinning to the release's full commit SHA with the version as a comment, e.g. `uses: cookpad/brakeman-linter-action@<commit SHA> # v3.0.0`. This is required if your organization enforces SHA-pinned actions.
 
 ### Custom report
 
@@ -50,7 +52,7 @@ These are the (required or recommended) options you can set for the runner.
   run: |
     brakeman -f json > tmp/brakeman.json || exit 0
 - name: Brakeman
-  uses: cookpad/brakeman-linter-action@v2.2.0
+  uses: cookpad/brakeman-linter-action@v3.0.0
   env:
     GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
     REPORT_PATH: tmp/brakeman.json
@@ -60,7 +62,7 @@ These are the (required or recommended) options you can set for the runner.
 
 ```yml
 - name: Brakeman
-  uses: cookpad/brakeman-linter-action@v2.2.0
+  uses: cookpad/brakeman-linter-action@v3.0.0
   env:
     GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
     PROJECT_PATH: my_rails_app
@@ -93,7 +95,7 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha || github.sha }}
     - name: Brakeman
-      uses: cookpad/brakeman-linter-action@v2.2.0
+      uses: cookpad/brakeman-linter-action@v3.0.0
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         CUSTOM_MESSAGE_CONTENT: "This is a cool, friendly comment!<br />Thank you for improving our security!"
