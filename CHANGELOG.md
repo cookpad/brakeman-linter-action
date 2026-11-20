@@ -3,6 +3,9 @@
 ## Unreleased (pre-release)
 
 - Fixes the check run staying "in progress" forever when Brakeman reports no warnings; it now completes as a success
+- Fails the check when Brakeman reports scan errors (e.g. a file it could not parse) and lists them in the check summary
+- Retries GitHub API requests that hit a rate limit (429, or a 403 caused by a rate limit), honouring `Retry-After` and `x-ratelimit-reset`; at most 3 retries per request and 5 minutes of waiting per run
+- Skips PR comments with a workflow warning, instead of failing, when the PR's changed files or existing comments can't be fetched; clean scans make no PR requests
 - Fixes only the first warning in each batch of 50 getting a PR comment; every warning in a file changed by the PR now gets one
 - Skips PR comments that already exist (same file, line and body), including duplicates within the same run, so re-runs no longer post duplicates
 - Uploads all annotations before posting PR comments; a comment that fails (e.g. rate limiting) is logged as a workflow warning and the remaining comments are still attempted
@@ -18,6 +21,11 @@ Behaviour changes:
 - `GITHUB_LATEST_SHA` now also sets the commit the check run is attached to, not just the PR comments. Resolution order: `GITHUB_LATEST_SHA`, then the PR head commit, then `GITHUB_SHA`. An empty value is treated as unset.
 - When `PROJECT_PATH` is set, warning paths are prefixed with it, including for reports supplied via `REPORT_PATH`.
 - An absolute `PROJECT_PATH` now stops the action with an error; it must be relative to the repository root.
+- A report with scan errors but no warnings now fails the check instead of passing.
+
+Before releasing:
+
+- Update the `uses: cookpad/brakeman-linter-action@v2.2.0` examples in the README to this release; the example workflow relies on these fixes.
 
 ## v2.3.0
 

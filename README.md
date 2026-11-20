@@ -18,6 +18,8 @@ The workflow token needs `checks: write` and `pull-requests: write` permissions.
 
 On `pull_request` events, `actions/checkout` checks out a temporary merge commit by default, while the check run and comments are attached to the PR's head commit. Check out the head commit (`ref: ${{ github.event.pull_request.head.sha }}`, as in the example workflow below) so that reported line numbers match the PR.
 
+Duplicate comments are only detected within a run and against comments that already exist, so two runs for the same PR that overlap can both post the same comment. Use a `concurrency` group per PR (as in the example workflow below) so that runs for the same PR are queued rather than run in parallel.
+
 ## Config options
 
 These are the (required or recommended) options you can set for the runner.
@@ -77,6 +79,10 @@ permissions:
   contents: read
   checks: write
   pull-requests: write
+
+concurrency:
+  group: brakeman-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
