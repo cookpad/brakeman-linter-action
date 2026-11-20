@@ -126,6 +126,12 @@ describe GithubCheckRunService do
       expect(a_request(:post, comments_url)).to have_been_made.times(24)
     end
 
+    it "posts a warning only once when the report lists it twice" do
+      brakeman_report["warnings"] << brakeman_report["warnings"].first.dup
+      service.run
+      expect(a_request(:post, comments_url)).to have_been_made.times(25)
+    end
+
     it "posts again when the existing comment is on a different line" do
       stub_existing_comments(1, [existing_comment.merge("line" => 7)])
       service.run

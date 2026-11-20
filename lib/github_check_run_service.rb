@@ -48,9 +48,11 @@ class GithubCheckRunService
 
     def client_post_pull_requests(annotation)
       payload = create_pull_request_comment_payload(annotation)
-      return if existing_comments.include?(payload.slice(:path, :line, :body))
+      key = payload.slice(:path, :line, :body)
+      return if existing_comments.include?(key)
 
       @client.post(pull_request_endpoint_url, payload)
+      existing_comments << key
     rescue GithubClient::IssueExistsOutsideOfPullRequestError
       puts "**************************************************************************"
       puts "* Brakeman has detected an issue elsewhere, outside of this Pull Request *"
