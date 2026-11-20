@@ -17,6 +17,16 @@ def non_empty_env(name)
   value unless value.empty?
 end
 
+def repo_relative_path(file, app_path:, project_path:)
+  file = Pathname.new(file)
+  file = file.relative_path_from(app_path) if file.absolute?
+  Pathname.new(project_path).join(file).cleanpath.to_s
+end
+
+if ENV["PROJECT_PATH"] && Pathname.new(ENV["PROJECT_PATH"]).absolute?
+  abort("::error::PROJECT_PATH must be relative to the repository root, got #{ENV['PROJECT_PATH'].inspect}")
+end
+
 project_path = if ENV["PROJECT_PATH"].nil?
                  ENV.fetch("GITHUB_WORKSPACE",
                    nil)
@@ -44,10 +54,9 @@ commit_sha = non_empty_env("GITHUB_LATEST_SHA") ||
     Dir.chdir(project_path) { JSON.parse(`brakeman -f json`) }
   end
 
-if ENV["PROJECT_PATH"]
-  @report["warnings"].each do |warning|
-    warning["file"] = Pathname.new(ENV["PROJECT_PATH"]).join(warning["file"]).cleanpath.to_s
-  end
+app_path = Pathname.new(@report.dig("scan_info", "app_path").to_s)
+@report["warnings"].each do |warning|
+  warning["file"] = repo_relative_path(warning["file"], app_path:, project_path: ENV.fetch("PROJECT_PATH", ""))
 end
 
 GithubCheckRunService.new(@report, @github_data, ReportAdapter).run

@@ -76,6 +76,41 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
     check_run_updates.flat_map { |body| JSON.parse(body)["output"]["annotations"].map { |a| a["path"] } }
   end
 
+  def absolute_paths_report_path
+    report = JSON.parse(File.read("./spec/fixtures/report.json"))
+    report["warnings"].each { |warning| warning["file"] = File.join(report["scan_info"]["app_path"], warning["file"]) }
+    File.join(tmpdir, "absolute_report.json").tap { |path| File.write(path, report.to_json) }
+  end
+
+  context "when the report has absolute warning paths" do
+    it "makes them relative to the scanned app" do
+      run_action("REPORT_PATH" => absolute_paths_report_path)
+      expect(annotated_paths).to include("app/controllers/password_resets_controller.rb").
+        and(all(satisfy { |path| !path.start_with?("/") }))
+    end
+
+    it "prefixes them with PROJECT_PATH" do
+      run_action("REPORT_PATH" => absolute_paths_report_path, "PROJECT_PATH" => "my_rails_app")
+      expect(annotated_paths).to include("my_rails_app/app/controllers/password_resets_controller.rb").
+        and(all(start_with("my_rails_app/")))
+    end
+  end
+
+  context "when PROJECT_PATH is absolute" do
+    it "stops with an error before contacting GitHub" do
+      expect { run_action("PROJECT_PATH" => "/github/workspace/my_rails_app") }.
+        to raise_error(SystemExit).
+        and output(%r{::error::PROJECT_PATH must be relative to the repository root, got "/github/workspace/my_rails_app"}).
+        to_stderr
+    end
+
+    it "makes no GitHub requests" do # rubocop:disable RSpec/MultipleExpectations -- raise_error only guards the abort
+      allow($stderr).to receive(:write)
+      expect { run_action("PROJECT_PATH" => "/github/workspace/my_rails_app") }.to raise_error(SystemExit)
+      expect(a_request(:any, /api.github.com/)).not_to have_been_made
+    end
+  end
+
   it "annotates paths relative to the repo root when PROJECT_PATH is not set" do
     run_action({})
     expect(annotated_paths).to include("app/controllers/password_resets_controller.rb")

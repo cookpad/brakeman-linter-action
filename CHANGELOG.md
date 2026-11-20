@@ -10,12 +10,14 @@
 - Fixes the action crashing on non-PR events (e.g. `push`), including when `GITHUB_PULL_REQUEST_NUMBER` is set to an empty value; PR comments are now only posted on `pull_request` events
 - Fixes PR comments failing when `GITHUB_LATEST_SHA` is not set; it now defaults to the pull request's head commit
 - Fixes annotations and PR comments pointing at the wrong files when `PROJECT_PATH` is set
+- Fixes absolute warning paths (from `brakeman --absolute-paths`) by making them relative to the report's `scan_info.app_path`
 - Attaches the check run to the pull request's head commit instead of the temporary merge commit, so it shows up on the PR
 
 Behaviour changes:
 
 - `GITHUB_LATEST_SHA` now also sets the commit the check run is attached to, not just the PR comments. Resolution order: `GITHUB_LATEST_SHA`, then the PR head commit, then `GITHUB_SHA`. An empty value is treated as unset.
 - When `PROJECT_PATH` is set, warning paths are prefixed with it, including for reports supplied via `REPORT_PATH`.
+- An absolute `PROJECT_PATH` now stops the action with an error; it must be relative to the repository root.
 
 ## v2.3.0
 
