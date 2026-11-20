@@ -6,6 +6,7 @@ require "tmpdir"
 describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is a script, not a class
   let(:comments_url) { "https://api.github.com/repos/owner/repository_name/pulls/10/comments" }
   let(:tmpdir) { Dir.mktmpdir }
+  let(:check_run_updates) { [] }
   let(:event_path) { File.join(tmpdir, "event.json").tap { |path| File.write(path, event.to_json) } }
   let(:event) do
     {
@@ -20,7 +21,10 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
     stub_request(:post, "https://api.github.com/repos/owner/repository_name/check-runs").
       to_return(status: 200, body: '{"id": "id"}')
     stub_request(:patch, "https://api.github.com/repos/owner/repository_name/check-runs/id").
-      to_return(status: 200, body: "{}")
+      to_return do |request|
+        check_run_updates << request.body
+        { status: 200, body: "{}" }
+      end
     stub_request(:get, comments_url).with(query: hash_including({})).to_return(status: 200, body: "[]")
     stub_request(:post, comments_url).to_return(status: 200, body: '{"id": "id"}')
   end
@@ -52,6 +56,33 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
         a_request(:post, "https://api.github.com/repos/owner/repository_name/check-runs").
           with(body: hash_including("head_sha" => "merge-sha"))
       ).to have_been_made.once
+    end
+  end
+
+  def annotated_paths
+    check_run_updates.flat_map { |body| JSON.parse(body)["output"]["annotations"].map { |a| a["path"] } }
+  end
+
+  it "annotates paths relative to the repo root when PROJECT_PATH is not set" do
+    run_action({})
+    expect(annotated_paths).to include("app/controllers/password_resets_controller.rb")
+  end
+
+  ["my_rails_app", "./my_rails_app/"].each do |project_path|
+    context "when PROJECT_PATH is #{project_path.inspect}" do
+      it "prefixes annotation paths with the project directory" do
+        run_action("PROJECT_PATH" => project_path)
+        expect(annotated_paths).to all(start_with("my_rails_app/")).
+          and include("my_rails_app/app/controllers/password_resets_controller.rb")
+      end
+
+      it "prefixes PR comment paths with the project directory" do
+        run_action("PROJECT_PATH" => project_path)
+        expect(
+          a_request(:post, comments_url).
+            with(body: hash_including("path" => "my_rails_app/app/controllers/password_resets_controller.rb"))
+        ).to have_been_made.times(3)
+      end
     end
   end
 

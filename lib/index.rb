@@ -2,6 +2,7 @@
 
 require "net/http"
 require "json"
+require "pathname"
 require "time"
 require_relative "report_adapter"
 require_relative "github_check_run_service"
@@ -42,5 +43,11 @@ commit_sha = non_empty_env("GITHUB_LATEST_SHA") ||
   else
     Dir.chdir(project_path) { JSON.parse(`brakeman -f json`) }
   end
+
+if ENV["PROJECT_PATH"]
+  @report["warnings"].each do |warning|
+    warning["file"] = Pathname.new(ENV["PROJECT_PATH"]).join(warning["file"]).cleanpath.to_s
+  end
+end
 
 GithubCheckRunService.new(@report, @github_data, ReportAdapter).run
