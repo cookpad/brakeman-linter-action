@@ -2,8 +2,9 @@
 
 source "https://rubygems.org"
 
+gem "brakeman"
+
 group :development, :test do
-  gem "brakeman"
   gem "rubocop"
   gem "rubocop-performance", require: false
   gem "rubocop-rspec", require: false
