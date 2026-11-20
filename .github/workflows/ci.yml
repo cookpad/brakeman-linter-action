@@ -24,7 +24,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
+          ruby-version: "4.0.10"
           bundler-cache: true
       - name: Run RuboCop
         run: bundle exec rubocop
@@ -47,7 +47,7 @@ jobs:
     if: always() && needs.rubocop.result == 'success' && (needs.dependency-review.result == 'success' || needs.dependency-review.result == 'skipped')
     strategy:
       matrix:
-        ruby-version: ["3.3", "4.0"]
+        ruby-version: ["3.3.14", "3.4.13", "4.0.10"]
     steps:
       - uses: actions/checkout@v6
       - name: Set up Ruby ${{ matrix.ruby-version }}
@@ -67,7 +67,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "4.0"
+          ruby-version: "4.0.10"
           bundler-cache: true
       - name: Brakeman report
         run: |

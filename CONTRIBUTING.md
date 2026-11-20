@@ -10,4 +10,4 @@ To lend a helping hand:
 * [Fork the repository](https://help.github.com/articles/fork-a-repo/)
 * Make your desired changes
 * [Create a pull request](https://help.github.com/articles/creating-a-pull-request/)
-...and we'll follow up as soon as we can. :) 
+...and we'll follow up as soon as we can. :)

@@ -17,6 +17,7 @@
 - Fixes annotations and PR comments pointing at the wrong files when `PROJECT_PATH` is set
 - Fixes absolute warning paths (from `brakeman --absolute-paths`) by making them relative to the report's `scan_info.app_path`
 - Attaches the check run to the pull request's head commit instead of the temporary merge commit, so it shows up on the PR
+- Updates the action to work with Ruby 4.0.10 and Brakeman 8.1.1
 
 Behaviour changes:
 
