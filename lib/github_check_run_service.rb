@@ -111,7 +111,7 @@ class GithubCheckRunService
 
     def create_pull_request_comment_payload(annotation)
       {
-        commit_id: @github_data[:latest_commit_sha],
+        commit_id: @github_data[:sha],
         path: annotation["path"],
         body: comment_body_generator(annotation),
         start_side: "RIGHT",

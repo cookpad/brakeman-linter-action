@@ -11,6 +11,11 @@ def read_json(path)
   JSON.parse(File.read(path))
 end
 
+def non_empty_env(name)
+  value = ENV.fetch(name, "")
+  value unless value.empty?
+end
+
 project_path = if ENV["PROJECT_PATH"].nil?
                  ENV.fetch("GITHUB_WORKSPACE",
                    nil)
@@ -19,9 +24,11 @@ project_path = if ENV["PROJECT_PATH"].nil?
                end
 
 @event_json = read_json(ENV["GITHUB_EVENT_PATH"]) if ENV["GITHUB_EVENT_PATH"]
+commit_sha = non_empty_env("GITHUB_LATEST_SHA") ||
+             @event_json.dig("pull_request", "head", "sha") ||
+             ENV.fetch("GITHUB_SHA", nil)
 @github_data = {
-  sha: ENV.fetch("GITHUB_SHA", nil),
-  latest_commit_sha: ENV["GITHUB_LATEST_SHA"] || @event_json.dig("pull_request", "head", "sha"),
+  sha: commit_sha,
   token: ENV.fetch("GITHUB_TOKEN", nil),
   owner: ENV["GITHUB_REPOSITORY_OWNER"] || @event_json.dig("repository", "owner", "login"),
   repo: ENV["GITHUB_REPOSITORY_NAME"] || @event_json.dig("repository", "name"),

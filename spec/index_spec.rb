@@ -35,6 +35,26 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
     load "./lib/index.rb"
   end
 
+  it "creates the check run on the PR head commit, not the merge commit" do
+    run_action({})
+    expect(
+      a_request(:post, "https://api.github.com/repos/owner/repository_name/check-runs").
+        with(body: hash_including("head_sha" => "head-sha"))
+    ).to have_been_made.once
+  end
+
+  context "when the event is a push" do
+    let(:event) { { "repository" => { "owner" => { "login" => "owner" }, "name" => "repository_name" } } }
+
+    it "creates the check run on GITHUB_SHA when GITHUB_LATEST_SHA is empty" do
+      run_action("GITHUB_LATEST_SHA" => "")
+      expect(
+        a_request(:post, "https://api.github.com/repos/owner/repository_name/check-runs").
+          with(body: hash_including("head_sha" => "merge-sha"))
+      ).to have_been_made.once
+    end
+  end
+
   it "comments on the PR head commit when GITHUB_LATEST_SHA is not set" do
     run_action({})
     expect(a_request(:post, comments_url).with(body: hash_including("commit_id" => "head-sha"))).
