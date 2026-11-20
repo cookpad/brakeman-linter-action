@@ -2,6 +2,7 @@
 
 require "net/http"
 require "json"
+require "pathname"
 require "time"
 require_relative "report_adapter"
 require_relative "github_check_run_service"
@@ -9,6 +10,21 @@ require_relative "github_client"
 
 def read_json(path)
   JSON.parse(File.read(path))
+end
+
+def non_empty_env(name)
+  value = ENV.fetch(name, "")
+  value unless value.empty?
+end
+
+def repo_relative_path(file, app_path:, project_path:)
+  file = Pathname.new(file)
+  file = file.relative_path_from(app_path) if file.absolute?
+  Pathname.new(project_path).join(file).cleanpath.to_s
+end
+
+if ENV["PROJECT_PATH"] && Pathname.new(ENV["PROJECT_PATH"]).absolute?
+  abort("::error::PROJECT_PATH must be relative to the repository root, got #{ENV['PROJECT_PATH'].inspect}")
 end
 
 project_path = if ENV["PROJECT_PATH"].nil?
@@ -19,13 +35,15 @@ project_path = if ENV["PROJECT_PATH"].nil?
                end
 
 @event_json = read_json(ENV["GITHUB_EVENT_PATH"]) if ENV["GITHUB_EVENT_PATH"]
+commit_sha = non_empty_env("GITHUB_LATEST_SHA") ||
+             @event_json.dig("pull_request", "head", "sha") ||
+             ENV.fetch("GITHUB_SHA", nil)
 @github_data = {
-  sha: ENV.fetch("GITHUB_SHA", nil),
-  latest_commit_sha: ENV.fetch("GITHUB_LATEST_SHA", nil),
+  sha: commit_sha,
   token: ENV.fetch("GITHUB_TOKEN", nil),
   owner: ENV["GITHUB_REPOSITORY_OWNER"] || @event_json.dig("repository", "owner", "login"),
   repo: ENV["GITHUB_REPOSITORY_NAME"] || @event_json.dig("repository", "name"),
-  pull_request_number: ENV["GITHUB_PULL_REQUEST_NUMBER"] || @event_json.dig("pull_request", "number"),
+  pull_request_number: non_empty_env("GITHUB_PULL_REQUEST_NUMBER") || @event_json.dig("pull_request", "number"),
   custom_message_content: ENV["CUSTOM_MESSAGE_CONTENT"] || ""
 }
 
@@ -35,5 +53,10 @@ project_path = if ENV["PROJECT_PATH"].nil?
   else
     Dir.chdir(project_path) { JSON.parse(`brakeman -f json`) }
   end
+
+app_path = Pathname.new(@report.dig("scan_info", "app_path").to_s)
+@report["warnings"].each do |warning|
+  warning["file"] = repo_relative_path(warning["file"], app_path:, project_path: ENV.fetch("PROJECT_PATH", ""))
+end
 
 GithubCheckRunService.new(@report, @github_data, ReportAdapter).run
