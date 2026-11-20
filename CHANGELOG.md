@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased (pre-release)
+## v3.0.0
+
+This release changes some behaviour that existing workflows may rely on; see **Behaviour changes** below before upgrading.
 
 - Fixes the check run staying "in progress" forever when Brakeman reports no warnings; it now completes as a success
 - Fails the check when Brakeman reports scan errors (e.g. a file it could not parse) and lists them in the check summary, truncated to fit GitHub's 65,535-byte limit
@@ -31,10 +33,6 @@ Behaviour changes:
 - An absolute `PROJECT_PATH` now stops the action with an error; it must be relative to the repository root.
 - A report with scan errors but no warnings now fails the check instead of passing.
 - Removed the undocumented `GITHUB_REPOSITORY_NAME` override. Results always go to the repository the workflow runs in; the owner already couldn't be changed, because `GITHUB_REPOSITORY_OWNER` is a built-in GitHub variable.
-
-Before releasing:
-
-- Update the `uses: cookpad/brakeman-linter-action@v2.2.0` examples in the README to this release; the example workflow relies on these fixes.
 
 ## v2.3.0
 
