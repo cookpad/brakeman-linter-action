@@ -57,6 +57,11 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
           with(body: hash_including("head_sha" => "merge-sha"))
       ).to have_been_made.once
     end
+
+    it "does not touch PR comments when GITHUB_PULL_REQUEST_NUMBER is empty" do
+      run_action("GITHUB_PULL_REQUEST_NUMBER" => "")
+      expect(a_request(:any, %r{/pulls/})).not_to have_been_made
+    end
   end
 
   def annotated_paths

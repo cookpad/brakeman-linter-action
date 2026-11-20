@@ -33,7 +33,7 @@ commit_sha = non_empty_env("GITHUB_LATEST_SHA") ||
   token: ENV.fetch("GITHUB_TOKEN", nil),
   owner: ENV["GITHUB_REPOSITORY_OWNER"] || @event_json.dig("repository", "owner", "login"),
   repo: ENV["GITHUB_REPOSITORY_NAME"] || @event_json.dig("repository", "name"),
-  pull_request_number: ENV["GITHUB_PULL_REQUEST_NUMBER"] || @event_json.dig("pull_request", "number"),
+  pull_request_number: non_empty_env("GITHUB_PULL_REQUEST_NUMBER") || @event_json.dig("pull_request", "number"),
   custom_message_content: ENV["CUSTOM_MESSAGE_CONTENT"] || ""
 }
 
