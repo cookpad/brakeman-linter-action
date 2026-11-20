@@ -86,6 +86,14 @@ describe GithubClient do
     expect(a_request(:post, url)).to have_been_made.once
   end
 
+  [Net::ReadTimeout, Net::OpenTimeout, Errno::ECONNRESET, SocketError, OpenSSL::SSL::SSLError].each do |error|
+    it "raises RequestError naming the request when #{error} occurs" do
+      stub_request(:get, url).to_raise(error)
+      expect { client.get("/repos/owner/repo/pulls/10/comments") }.
+        to raise_error(GithubClient::RequestError, %r{\AGET /repos/owner/repo/pulls/10/comments failed: #{error}})
+    end
+  end
+
   it "raises with the status message and body for other failures" do
     stub_request(:post, url).to_return(status: [403, "Forbidden"], body: '{"message":"nope"}')
     expect { client.post("/repos/owner/repo/pulls/10/comments") }.

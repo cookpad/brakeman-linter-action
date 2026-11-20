@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "net/http"
+require "openssl"
+
 class GithubClient
   class IssueExistsOutsideOfPullRequestError < StandardError
   end
@@ -8,6 +11,10 @@ class GithubClient
   end
 
   OUTSIDE_DIFF_FIELDS = ["pull_request_review_thread.diff_hunk", "pull_request_review_thread.line"].freeze
+  NETWORK_ERRORS = [
+    Net::OpenTimeout, Net::ReadTimeout, Net::WriteTimeout, Errno::ECONNRESET, Errno::ECONNREFUSED,
+    Errno::EHOSTUNREACH, Errno::ETIMEDOUT, SocketError, EOFError, OpenSSL::SSL::SSLError
+  ].freeze
   MAX_RETRIES = 3
   MAX_TOTAL_WAIT_SECONDS = 300
   SECONDARY_RATE_LIMIT_WAIT_SECONDS = 60
@@ -19,19 +26,19 @@ class GithubClient
   end
 
   def get(url)
-    request_http do |http|
+    request_http("GET", url) do |http|
       http.get(url, headers)
     end
   end
 
   def patch(url, body = {})
-    request_http do |http|
+    request_http("PATCH", url) do |http|
       http.patch(url, body.to_json, headers)
     end
   end
 
   def post(url, body = {})
-    request_http do |http|
+    request_http("POST", url) do |http|
       http.post(url, body.to_json, headers)
     end
   end
@@ -47,12 +54,10 @@ class GithubClient
       }
     end
 
-    def request_http
+    def request_http(method, url, &)
       retries = 0
       loop do
-        http = Net::HTTP.new("api.github.com", 443)
-        http.use_ssl = true
-        response = yield(http)
+        response = send_request(method, url, &)
         wait = retry_wait(response, retries)
         return parse_response(response) unless wait
 
@@ -61,6 +66,14 @@ class GithubClient
         @seconds_waited += wait
         sleep(wait)
       end
+    end
+
+    def send_request(method, url)
+      http = Net::HTTP.new("api.github.com", 443)
+      http.use_ssl = true
+      yield(http)
+    rescue *NETWORK_ERRORS => e
+      raise RequestError, "#{method} #{url} failed: #{e.class}: #{e.message}"
     end
 
     def retry_wait(response, retries)
