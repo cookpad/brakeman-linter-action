@@ -4,6 +4,7 @@ class GithubCheckRunService
   CHECK_NAME = "Brakeman"
   MAX_ANNOTATIONS_SIZE = 50
   PER_PAGE = 100
+  PULL_REQUEST_FILES_LIMIT = 3000
   EMOJI_MAPPER = { High: "🚨", Medium: "⚠️", Weak: "❔" }.freeze
   BRAKEMAN_URL = "https://brakemanscanner.org/docs/warning_types/"
   def initialize(report, github_data, report_adapter)
@@ -41,8 +42,9 @@ class GithubCheckRunService
     rescue GithubClient::RequestError => e
       puts "::warning::Could not fetch pull request data, skipping PR comments: #{e.message}"
     else
+      file_list_complete = changed_files.size < PULL_REQUEST_FILES_LIMIT
       @annotations.each do |annotation|
-        client_post_pull_requests(annotation) if changed_files.include?(annotation["path"])
+        client_post_pull_requests(annotation) if !file_list_complete || changed_files.include?(annotation["path"])
       end
     end
 

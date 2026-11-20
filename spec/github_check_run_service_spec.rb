@@ -56,6 +56,13 @@ describe GithubCheckRunService do
       expect(a_request(:post, comments_url)).to have_been_made.times(3)
     end
 
+    it "tries every warning when the changed-file list hits GitHub's 3,000-file cap" do
+      30.times { |page| stub_changed_files(page + 1, Array.new(100) { |i| "unrelated_#{page}_#{i}.rb" }) }
+      stub_changed_files(31, [])
+      service.run
+      expect(a_request(:post, comments_url)).to have_been_made.times(25)
+    end
+
     it "finds changed files on a later page" do
       stub_changed_files(1, Array.new(100) { |i| "unrelated_#{i}.rb" })
       stub_changed_files(2, ["app/controllers/password_resets_controller.rb"])
@@ -93,6 +100,16 @@ describe GithubCheckRunService do
         service.run
         expect(a_request(:post, comments_url)).not_to have_been_made
       end
+    end
+  end
+
+  context "when the connection drops while posting a PR comment" do
+    it "attempts the remaining comments" do
+      stub_check_run
+      stub_request(:post, comments_url).to_raise(Errno::ECONNRESET)
+      allow($stdout).to receive(:puts)
+      service.run
+      expect(a_request(:post, comments_url)).to have_been_made.times(25)
     end
   end
 
