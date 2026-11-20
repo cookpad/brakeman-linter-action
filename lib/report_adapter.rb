@@ -5,7 +5,7 @@ class ReportAdapter
   class << self
     CONCLUSION_TYPES = { failure: "failure", success: "success" }.freeze
     ANNOTATION_LEVEL = { notice: "notice", warning: "warning", failure: "failure" }.freeze
-    MAX_SUMMARY_LENGTH = 65_535
+    MAX_SUMMARY_BYTES = 65_535
     OMITTED_NOTICE_RESERVE = 100
 
     def conslusion(report)
@@ -16,7 +16,7 @@ class ReportAdapter
 
     def summary(report)
       warnings = "**Brakeman Report**:\n#{security_warnings(report)} security warnings\n#{check_table(report)}"
-      warnings + errors_list(report, MAX_SUMMARY_LENGTH - warnings.length)
+      warnings + errors_list(report, MAX_SUMMARY_BYTES - warnings.bytesize)
     end
 
     def annotations(report)
@@ -42,14 +42,14 @@ class ReportAdapter
         report["warnings"].map { |w| { check_name: w["check_name"], link: w["link"] } }.uniq { |w| w[:check_name] }
       end
 
-      def errors_list(report, max_length)
+      def errors_list(report, max_bytes)
         errors = scan_errors(report)
         return "" if errors.empty?
 
         text = "\n**#{errors.size} scan error(s)** (Brakeman could not fully scan these):\n"
         errors.each_with_index do |error, shown|
           line = "- #{error['error']}\n"
-          if text.length + line.length + OMITTED_NOTICE_RESERVE > max_length
+          if text.bytesize + line.bytesize + OMITTED_NOTICE_RESERVE > max_bytes
             return text << "...and #{errors.size - shown} more scan error(s) not shown\n"
           end
 

@@ -49,6 +49,11 @@ describe ReportAdapter do
       expect(adapter.summary(report_with_many_errors).length).to be <= 65_535
     end
 
+    it "keeps the summary within 65,535 bytes when errors contain multibyte characters" do
+      report_with_many_errors["errors"].each { |error| error["error"] = error["error"].tr("x", "é") }
+      expect(adapter.summary(report_with_many_errors).bytesize).to be <= 65_535
+    end
+
     it "keeps the total error count and says how many were left out" do
       expect(adapter.summary(report_with_many_errors)).
         to include("**2000 scan error(s)**").and match(/\.\.\.and \d+ more scan error\(s\) not shown/)

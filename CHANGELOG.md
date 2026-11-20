@@ -3,7 +3,7 @@
 ## Unreleased (pre-release)
 
 - Fixes the check run staying "in progress" forever when Brakeman reports no warnings; it now completes as a success
-- Fails the check when Brakeman reports scan errors (e.g. a file it could not parse) and lists them in the check summary, truncated to fit GitHub's 65,535-character limit
+- Fails the check when Brakeman reports scan errors (e.g. a file it could not parse) and lists them in the check summary, truncated to fit GitHub's 65,535-byte limit
 - Tries every warning for PR comments when the PR has 3,000 or more changed files, since GitHub can't list them all
 - Treats network failures (timeouts, connection resets, DNS and TLS errors) like failed requests, so they skip a PR comment instead of failing the action
 - Retries GitHub API requests that hit a rate limit (429, or a 403 caused by a rate limit), honouring `Retry-After` and `x-ratelimit-reset`; at most 3 retries per request and 5 minutes of waiting per run
