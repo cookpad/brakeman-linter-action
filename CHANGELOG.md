@@ -3,9 +3,11 @@
 ## Unreleased (pre-release)
 
 - Fixes the check run staying "in progress" forever when Brakeman reports no warnings; it now completes as a success
-- Fixes only the first warning in each batch of 50 getting a PR comment; every warning now gets one
-- Skips PR comments that already exist (same file, line and body), so re-runs no longer post duplicates
-- Fixes the action crashing on non-PR events (e.g. `push`); PR comments are now only posted on `pull_request` events
+- Fixes only the first warning in each batch of 50 getting a PR comment; every warning in a file changed by the PR now gets one
+- Skips PR comments that already exist (same file, line and body), including duplicates within the same run, so re-runs no longer post duplicates
+- Uploads all annotations before posting PR comments; a comment that fails (e.g. rate limiting) is logged as a workflow warning and the remaining comments are still attempted
+- Fixes successful responses mentioning `diff_hunk` being treated as errors, and 422 errors on `pull_request_review_thread.line` aborting the run
+- Fixes the action crashing on non-PR events (e.g. `push`), including when `GITHUB_PULL_REQUEST_NUMBER` is set to an empty value; PR comments are now only posted on `pull_request` events
 - Fixes PR comments failing when `GITHUB_LATEST_SHA` is not set; it now defaults to the pull request's head commit
 - Fixes annotations and PR comments pointing at the wrong files when `PROJECT_PATH` is set
 - Attaches the check run to the pull request's head commit instead of the temporary merge commit, so it shows up on the PR

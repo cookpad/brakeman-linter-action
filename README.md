@@ -12,9 +12,11 @@ regardless of context.
 ## What it does
 
 - Creates a "Brakeman" check run on the commit and adds an annotation for each warning. The check fails if Brakeman reports any security warnings and succeeds otherwise.
-- On `pull_request` events, also posts a review comment for each warning on a line changed in the PR. A warning that already has an identical comment (same file, line and body) is skipped, so re-runs don't post duplicates.
+- On `pull_request` events, also posts a review comment for each warning in a file changed by the PR. A warning that already has an identical comment (same file, line and body) is skipped, so re-runs don't post duplicates. If a comment can't be posted (e.g. rate limiting), it is logged as a workflow warning and the remaining comments are still attempted; annotations are always uploaded first.
 
 The workflow token needs `checks: write` and `pull-requests: write` permissions.
+
+On `pull_request` events, `actions/checkout` checks out a temporary merge commit by default, while the check run and comments are attached to the PR's head commit. Check out the head commit (`ref: ${{ github.event.pull_request.head.sha }}`, as in the example workflow below) so that reported line numbers match the PR.
 
 ## Config options
 
@@ -81,6 +83,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v6
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
     - name: Brakeman
       uses: cookpad/brakeman-linter-action@v2.2.0
       env:
