@@ -8,7 +8,7 @@ class ReportAdapter
     MAX_SUMMARY_BYTES = 65_535
     OMITTED_NOTICE_RESERVE = 100
 
-    def conslusion(report)
+    def conclusion(report)
       return CONCLUSION_TYPES[:failure] if security_warnings(report) > 0 || scan_errors(report).any?
 
       CONCLUSION_TYPES[:success]

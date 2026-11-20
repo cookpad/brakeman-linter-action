@@ -21,7 +21,7 @@ class GithubCheckRunService
     )["id"]
     @summary = @report_adapter.summary(@report)
     @annotations = @report_adapter.annotations(@report)
-    @conclusion = @report_adapter.conslusion(@report)
+    @conclusion = @report_adapter.conclusion(@report)
     upload_annotations(id)
     post_pull_request_comments
   end

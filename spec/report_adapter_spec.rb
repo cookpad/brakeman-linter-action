@@ -18,7 +18,7 @@ describe ReportAdapter do
   let(:adapter) { described_class }
 
   it ".conclusion" do
-    result = adapter.conslusion(brakeman_report)
+    result = adapter.conclusion(brakeman_report)
     expect(result).to eq("failure")
   end
 
@@ -30,7 +30,7 @@ describe ReportAdapter do
     end
 
     it "concludes as a failure" do
-      expect(adapter.conslusion(report_with_errors)).to eq("failure")
+      expect(adapter.conclusion(report_with_errors)).to eq("failure")
     end
 
     it "lists the scan errors in the summary" do
