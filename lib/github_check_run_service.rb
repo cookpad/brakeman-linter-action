@@ -3,6 +3,7 @@
 class GithubCheckRunService
   CHECK_NAME = "Brakeman"
   MAX_ANNOTATIONS_SIZE = 50
+  COMMENTS_PER_PAGE = 100
   EMOJI_MAPPER = { High: "🚨", Medium: "⚠️", Weak: "❔" }.freeze
   BRAKEMAN_URL = "https://brakemanscanner.org/docs/warning_types/"
   def initialize(report, github_data, report_adapter)
@@ -23,10 +24,9 @@ class GithubCheckRunService
     return client_patch_annotations(id, []) if @annotations.empty?
 
     result = {}
-    @annotations.each_slice(MAX_ANNOTATIONS_SIZE) do |annotation|
-      result.merge!(client_patch_annotations(id, annotation))
-      # Don't need to merge twice
-      client_post_pull_requests(annotation[0])
+    @annotations.each_slice(MAX_ANNOTATIONS_SIZE) do |batch|
+      result.merge!(client_patch_annotations(id, batch))
+      batch.each { |annotation| client_post_pull_requests(annotation) }
     end
     result
   end
@@ -41,15 +41,34 @@ class GithubCheckRunService
     end
 
     def client_post_pull_requests(annotation)
-      @client.post(
-        pull_request_endpoint_url.to_s,
-        create_pull_request_comment_payload(annotation)
-      )
+      payload = create_pull_request_comment_payload(annotation)
+      return if existing_comments.include?(payload.slice(:path, :line, :body))
+
+      @client.post(pull_request_endpoint_url, payload)
     rescue GithubClient::IssueExistsOutsideOfPullRequestError
       puts "**************************************************************************"
       puts "* Brakeman has detected an issue elsewhere, outside of this Pull Request *"
       puts "* Please check the results above to see where & what needs to be fixed.  *"
       puts "**************************************************************************"
+    end
+
+    def existing_comments
+      @_existing_comments ||= fetch_existing_comments.map do |comment|
+        { path: comment["path"], line: comment["line"], body: comment["body"] }
+      end
+    end
+
+    def fetch_existing_comments
+      comments = []
+      page = 1
+      loop do
+        batch = @client.get("#{pull_request_endpoint_url}?per_page=#{COMMENTS_PER_PAGE}&page=#{page}")
+        comments.concat(batch)
+        break if batch.size < COMMENTS_PER_PAGE
+
+        page += 1
+      end
+      comments
     end
 
     def annotation_endpoint_url

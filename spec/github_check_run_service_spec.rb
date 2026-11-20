@@ -8,6 +8,18 @@ describe GithubCheckRunService do
   let(:github_data) { { sha: "sha", token: "token", owner: "owner", repo: "repository_name", pull_request_number: "10" } }
   let(:service) { described_class.new(brakeman_report, github_data, ReportAdapter) }
 
+  def comments_url
+    "https://api.github.com/repos/owner/repository_name/pulls/10/comments"
+  end
+
+  def stub_existing_comments(page, comments)
+    stub_request(:get, comments_url).
+      with(query: { "per_page" => "100", "page" => page.to_s }).
+      to_return(status: 200, body: comments.to_json)
+  end
+
+  before { stub_existing_comments(1, []) }
+
   it "#run" do # rubocop:disable RSpec/ExampleLength
     stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
       to_return(status: 200, body: "{}")
@@ -40,18 +52,70 @@ describe GithubCheckRunService do
   end
 
   context "when the annotation limit is set" do
-    it "updates the check run multiple times" do # rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations
+    before do
       stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs").
         to_return(status: 200, body: '{"id": "id"}')
 
-      stub_request(:any, "https://api.github.com/repos/owner/repository_name/pulls/10/comments").
-        to_return(status: 200, body: '{"id": "id"}')
+      stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
+        to_return(status: 200, body: "{}")
+
+      stub_request(:post, comments_url).to_return(status: 200, body: '{"id": "id"}')
 
       stub_const("GithubCheckRunService::MAX_ANNOTATIONS_SIZE", 2)
-      allow(service).to receive_messages(client_patch_annotations: {}, client_post_pull_requests: {})
+    end
+
+    it "updates the check run once per batch of annotations" do
       service.run
-      expect(service).to have_received(:client_patch_annotations).exactly(13).times
-      expect(service).to have_received(:client_post_pull_requests).exactly(13).times
+      expect(a_request(:patch, "https://api.github.com/repos/owner/repository_name/check-runs/id")).
+        to have_been_made.times(13)
+    end
+
+    it "posts a PR comment for every warning" do
+      service.run
+      expect(a_request(:post, comments_url)).to have_been_made.times(25)
+    end
+  end
+
+  context "when a warning already has an identical PR comment" do
+    def existing_comment
+      {
+        "path" => "app/controllers/password_resets_controller.rb",
+        "line" => 6,
+        "body" => "⚠️ **Potential Vulnerability Detected** ⚠️<br /><br />" \
+                  "**Confidence level**: Medium<br />" \
+                  "**Type**: Deserialize<br />" \
+                  "**Description**: `Marshal.load` called with parameter value<br />" \
+                  "**More information available at**: https://brakemanscanner.org/docs/warning_types/<br />"
+      }
+    end
+
+    before do
+      stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs").
+        to_return(status: 200, body: '{"id": "id"}')
+
+      stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
+        to_return(status: 200, body: "{}")
+
+      stub_request(:post, comments_url).to_return(status: 200, body: '{"id": "id"}')
+    end
+
+    it "does not post that comment again" do
+      stub_existing_comments(1, [existing_comment])
+      service.run
+      expect(a_request(:post, comments_url)).to have_been_made.times(24)
+    end
+
+    it "finds the existing comment on a later page" do
+      stub_existing_comments(1, Array.new(100, { "path" => "README.md", "line" => 1, "body" => "Nice" }))
+      stub_existing_comments(2, [existing_comment])
+      service.run
+      expect(a_request(:post, comments_url)).to have_been_made.times(24)
+    end
+
+    it "posts again when the existing comment is on a different line" do
+      stub_existing_comments(1, [existing_comment.merge("line" => 7)])
+      service.run
+      expect(a_request(:post, comments_url)).to have_been_made.times(25)
     end
   end
 

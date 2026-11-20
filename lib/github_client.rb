@@ -9,6 +9,12 @@ class GithubClient
     @user_agent = user_agent
   end
 
+  def get(url)
+    request_http do |http|
+      http.get(url, headers)
+    end
+  end
+
   def patch(url, body = {})
     request_http do |http|
       http.patch(url, body.to_json, headers)
