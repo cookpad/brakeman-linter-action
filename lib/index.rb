@@ -8,6 +8,7 @@ require "time"
 require_relative "report_adapter"
 require_relative "github_check_run_service"
 require_relative "github_client"
+require_relative "workflow_command"
 
 def read_json(path)
   JSON.parse(File.read(path))
@@ -18,7 +19,8 @@ def run_brakeman(dir)
   JSON.parse(stdout)
 rescue JSON::ParserError
   output = [stderr, stdout].map(&:strip).reject(&:empty?).join("\n").lines.last(20).join
-  abort("::error::Brakeman did not produce a JSON report (exit status #{status.exitstatus}). Output:\n#{output}")
+  message = "Brakeman did not produce a JSON report (exit status #{status.exitstatus}). Output:\n#{output}"
+  abort(WorkflowCommand.build(:error, message))
 end
 
 def non_empty_env(name)
@@ -33,7 +35,8 @@ def repo_relative_path(file, app_path:, project_path:)
 end
 
 if ENV["PROJECT_PATH"] && Pathname.new(ENV["PROJECT_PATH"]).absolute?
-  abort("::error::PROJECT_PATH must be relative to the repository root, got #{ENV['PROJECT_PATH'].inspect}")
+  message = "PROJECT_PATH must be relative to the repository root, got #{ENV['PROJECT_PATH'].inspect}"
+  abort(WorkflowCommand.build(:error, message))
 end
 
 project_path = if ENV["PROJECT_PATH"].nil?

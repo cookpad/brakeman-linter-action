@@ -71,6 +71,13 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
         and output(/::error::Brakeman did not produce a JSON report \(exit status 4\).*Please supply the path/m).
         to_stderr
     end
+
+    it "doesn't let Brakeman's output start its own workflow command" do
+      allow(Open3).to receive(:capture3).and_return(brakeman_result("", "parse error near:\n::add-mask::hidden", 1))
+      expect { run_action(brakeman_env) }.
+        to raise_error(SystemExit).
+        and output(satisfy { |err| err.lines.none? { |line| line.start_with?("::add-mask::") } }).to_stderr
+    end
   end
 
   it "reports to the repository from the event even if GITHUB_REPOSITORY_NAME is set" do

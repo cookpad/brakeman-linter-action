@@ -6,6 +6,7 @@ require "pry"
 require "./lib/report_adapter"
 require "./lib/github_check_run_service"
 require "./lib/github_client"
+require "./lib/workflow_command"
 
 RSpec.configure do |config|
   config.before do
