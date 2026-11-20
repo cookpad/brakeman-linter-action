@@ -99,3 +99,20 @@ jobs:
 ```
 
 Remember: if you want a line break in CUSTOM_MESSAGE_CONTENT it is recommended to use `<br />` tags.
+
+## Development
+
+Git hooks are managed with [prek](https://github.com/j178/prek). After cloning, run:
+
+```sh
+prek install
+```
+
+The hooks run zizmor, actionlint and pinact when workflows (and, for zizmor, `dependabot.yml` and `.pre-commit-config.yaml`) change. Each tool is pinned in `.pre-commit-config.yaml` and installed by prek itself on first run (including a Go toolchain if needed), so nothing else needs to be installed beforehand.
+
+Run the tests and linter with:
+
+```sh
+bundle exec rspec
+bundle exec rubocop
+```
