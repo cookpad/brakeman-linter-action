@@ -9,8 +9,7 @@ require "./lib/github_client"
 
 RSpec.configure do |config|
   config.before do
-    # rubocop:disable RSpec/AnyInstance -- clients are built inside the service; a retry must never sleep for real
+    # rubocop:disable-next RSpec/AnyInstance -- clients are built inside the service; a retry must never sleep for real
     allow_any_instance_of(GithubClient).to receive(:sleep)
-    # rubocop:enable RSpec/AnyInstance
   end
 end
