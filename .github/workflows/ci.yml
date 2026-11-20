@@ -10,15 +10,27 @@ permissions:
   contents: read
 
 jobs:
+  pinact:
+    name: Pinact
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - name: Check actions are pinned
+        uses: suzuki-shunsuke/pinact-action@b1a1f46bb10f2908950d95f626ca8cc109e2cf7d # v3.1.0
+        with:
+          fix: "false"
+
   rubocop:
     name: RuboCop
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1.343.0
         with:
           ruby-version: "4.0.10"
           bundler-cache: true
@@ -32,11 +44,11 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
       - name: Dependency Review
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
 
   test:
     name: RSpec (${{ matrix.ruby.name }})
@@ -50,11 +62,11 @@ jobs:
           - { name: "3.4", version: "3.4.13" }
           - { name: "4.0", version: "4.0.10" }
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
       - name: Set up Ruby ${{ matrix.ruby.version }}
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1.343.0
         with:
           ruby-version: ${{ matrix.ruby.version }}
           bundler-cache: true
@@ -70,11 +82,11 @@ jobs:
       checks: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1.343.0
         with:
           ruby-version: "4.0.10"
           bundler-cache: true

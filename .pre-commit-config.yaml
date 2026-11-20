@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: pinact
+        name: pinact (actions pinned to SHAs)
+        entry: pinact run --fix=false --no-api
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$

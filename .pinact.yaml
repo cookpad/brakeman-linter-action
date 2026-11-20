@@ -1,0 +1,8 @@
+# https://github.com/suzuki-shunsuke/pinact/blob/main/docs/config.md
+version: 3
+files:
+  - pattern: .github/workflows/*.yml
+  - pattern: .github/workflows/*.yaml
+min_age:
+  value: 7
+  always: true
