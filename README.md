@@ -6,7 +6,7 @@ You can read more about Brakeman itself [here](https://github.com/presidentbeef/
 
 This action helps make sure that brakeman results get accurately added to pull requests, in the event of a new issue.
 
-Currently we recommend hardcoding the brakeman version (e.g. 8.0.4) to prevent the unintended consequences of pulling down the latest version
+Currently we recommend hardcoding the brakeman version (e.g. 8.1.1) to prevent the unintended consequences of pulling down the latest version
 regardless of context.
 
 ## What it does
@@ -44,7 +44,7 @@ These are the (required or recommended) options you can set for the runner.
 ```yml
 - name: Install gems
   run: |
-    gem install brakeman -v 8.0.4
+    gem install brakeman -v 8.1.1
 - name: brakeman report
   run: |
     brakeman -f json > tmp/brakeman.json || exit 0
