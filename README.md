@@ -9,12 +9,19 @@ This action helps make sure that brakeman results get accurately added to pull r
 Currently we recommend hardcoding the brakeman version (e.g. 8.0.4) to prevent the unintended consequences of pulling down the latest version
 regardless of context.
 
+## What it does
+
+- Creates a "Brakeman" check run on the commit and adds an annotation for each warning. The check fails if Brakeman reports any security warnings and succeeds otherwise.
+- On `pull_request` events, also posts a review comment for each warning on a line changed in the PR. A warning that already has an identical comment (same file, line and body) is skipped, so re-runs don't post duplicates.
+
+The workflow token needs `checks: write` and `pull-requests: write` permissions.
+
 ## Config options
 
 These are the (required or recommended) options you can set for the runner.
 
 - GITHUB_TOKEN (required): the [github token](https://docs.github.com/en/actions/security-guides/automatic-token-authentication), naturally :)
-- REPORT_PATH: Where on the action runner you want the report to go, e.g. "/tmp/report.json". If not set, just outputs a json string.
+- REPORT_PATH: Path to an existing Brakeman JSON report, e.g. "tmp/brakeman.json". If not set, the action runs Brakeman itself in PROJECT_PATH.
 - PROJECT_PATH: The path of the project you want to scan (in case you have multiple apps in a repo). Defaults to the value of the [GITHUB_WORKSPACE](https://docs.github.com/en/actions/learn-github-actions/environment-variables) envvar. When set, warning file paths are prefixed with it so annotations and PR comments land on the right files; this also applies to a report supplied via REPORT_PATH.
 - GITHUB_LATEST_SHA: the commit that the check run and PR review comments are attached to. Defaults to the pull request's head commit (`github.event.pull_request.head.sha`), or `GITHUB_SHA` outside pull requests. PR comments are only posted on `pull_request` events.
 - CUSTOM_MESSAGE_CONTENT: Something custom you want to add to the PR comments, e.g. a runbook or an emoji or a friendly message. Note that if you want a line break in CUSTOM_MESSAGE_CONTENT it is recommended to use `<br />` tags.
@@ -59,18 +66,25 @@ These are the (required or recommended) options you can set for the runner.
 ```
 name: Brakeman
 
-on: [push]
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
 
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v6
     - name: Brakeman
       uses: cookpad/brakeman-linter-action@v2.2.0
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        GITHUB_LATEST_SHA: ${{ github.event.pull_request.head.sha }}
         CUSTOM_MESSAGE_CONTENT: "This is a cool, friendly comment!<br />Thank you for improving our security!"
 ```
 

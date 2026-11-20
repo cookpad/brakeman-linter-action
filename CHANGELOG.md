@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased (pre-release)
+
+- Fixes the check run staying "in progress" forever when Brakeman reports no warnings; it now completes as a success
+- Fixes only the first warning in each batch of 50 getting a PR comment; every warning now gets one
+- Skips PR comments that already exist (same file, line and body), so re-runs no longer post duplicates
+- Fixes the action crashing on non-PR events (e.g. `push`); PR comments are now only posted on `pull_request` events
+- Fixes PR comments failing when `GITHUB_LATEST_SHA` is not set; it now defaults to the pull request's head commit
+- Fixes annotations and PR comments pointing at the wrong files when `PROJECT_PATH` is set
+- Attaches the check run to the pull request's head commit instead of the temporary merge commit, so it shows up on the PR
+
+Behaviour changes:
+
+- `GITHUB_LATEST_SHA` now also sets the commit the check run is attached to, not just the PR comments. Resolution order: `GITHUB_LATEST_SHA`, then the PR head commit, then `GITHUB_SHA`. An empty value is treated as unset.
+- When `PROJECT_PATH` is set, warning paths are prefixed with it, including for reports supplied via `REPORT_PATH`.
+
 ## v2.3.0
 
 - Adds support for Ruby 4.0.1 and Ruby 3.3 (test matrix now covers both)
