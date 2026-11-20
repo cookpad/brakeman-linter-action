@@ -41,19 +41,22 @@ jobs:
         uses: actions/dependency-review-action@v4
 
   test:
-    name: RSpec (${{ matrix.ruby-version }})
+    name: RSpec (${{ matrix.ruby.name }})
     runs-on: ubuntu-24.04
     needs: [rubocop, dependency-review]
     if: always() && needs.rubocop.result == 'success' && (needs.dependency-review.result == 'success' || needs.dependency-review.result == 'skipped')
     strategy:
       matrix:
-        ruby-version: ["3.3.14", "3.4.13", "4.0.10"]
+        ruby:
+          - { name: "3.3", version: "3.3.14" }
+          - { name: "3.4", version: "3.4.13" }
+          - { name: "4.0", version: "4.0.10" }
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Ruby ${{ matrix.ruby-version }}
+      - name: Set up Ruby ${{ matrix.ruby.version }}
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ matrix.ruby-version }}
+          ruby-version: ${{ matrix.ruby.version }}
           bundler-cache: true
       - name: Run RSpec
         run: bundle exec rspec
