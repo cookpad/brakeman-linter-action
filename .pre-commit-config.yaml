@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: 06a39750ec31860bb44f2acf67182c40016cd1e7 # frozen: v1.32.0
+    hooks:
+      - id: zizmor
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca # frozen: v1.7.12
+    hooks:
+      - id: actionlint
+
+  - repo: local
+    hooks:
+      - id: pinact
+        name: pinact (actions pinned to SHAs)
+        entry: pinact run --fix=false --no-api
+        language: golang
+        additional_dependencies: ["github.com/suzuki-shunsuke/pinact/v5/cmd/pinact@v5.0.2"]
+        files: ^\.github/workflows/.*\.ya?ml$

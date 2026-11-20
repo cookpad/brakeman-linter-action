@@ -1,0 +1,15 @@
+# https://github.com/suzuki-shunsuke/pinact/blob/main/docs/config.md
+version: 3
+files:
+  - pattern: .github/workflows/*.yml
+  - pattern: .github/workflows/*.yaml
+min_age:
+  value: 7
+  always: true
+rules:
+  # ruby/setup-ruby v1.343.0 (released 2026-11-20) is needed now for its CVE fixes.
+  # Matches only this commit; remove after 2026-11-27, when it clears the 7-day cutoff.
+  - min_age: 0
+    conditions:
+      - expr: |
+          ActionRepoFullName == "ruby/setup-ruby" && ActionVersion == "be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18"
