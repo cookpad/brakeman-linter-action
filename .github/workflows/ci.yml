@@ -5,15 +5,9 @@ on:
     branches:
       - main
   pull_request:
-    types:
-      - opened
-      - edited
-      - synchronize
 
 permissions:
   contents: read
-  checks: write
-  pull-requests: write
 
 jobs:
   rubocop:
@@ -21,6 +15,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -37,6 +33,8 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
 
@@ -53,6 +51,8 @@ jobs:
           - { name: "4.0", version: "4.0.10" }
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Set up Ruby ${{ matrix.ruby.version }}
         uses: ruby/setup-ruby@v1
         with:
@@ -65,8 +65,14 @@ jobs:
     name: Security checks (dogfooding)
     runs-on: ubuntu-24.04
     needs: [test]
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
