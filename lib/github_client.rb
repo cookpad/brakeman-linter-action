@@ -4,6 +4,9 @@ class GithubClient
   class IssueExistsOutsideOfPullRequestError < StandardError
   end
 
+  class RequestError < StandardError
+  end
+
   OUTSIDE_DIFF_FIELDS = ["pull_request_review_thread.diff_hunk", "pull_request_review_thread.line"].freeze
 
   def initialize(github_token, user_agent: "ruby")
@@ -45,7 +48,7 @@ class GithubClient
       http.use_ssl = true
       response = yield(http)
       raise IssueExistsOutsideOfPullRequestError if outside_diff_error?(response)
-      raise "#{response.message}: #{response.body}" if response.code.to_i >= 300
+      raise RequestError, "#{response.message}: #{response.body}" if response.code.to_i >= 300
 
       JSON.parse(response.body)
     end

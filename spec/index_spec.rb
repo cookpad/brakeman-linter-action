@@ -17,6 +17,11 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
 
   after { FileUtils.remove_entry(tmpdir) }
 
+  def changed_files
+    files = JSON.parse(File.read("./spec/fixtures/report.json"))["warnings"].map { |warning| warning["file"] }.uniq
+    files + files.map { |file| "my_rails_app/#{file}" }
+  end
+
   before do
     stub_request(:post, "https://api.github.com/repos/owner/repository_name/check-runs").
       to_return(status: 200, body: '{"id": "id"}')
@@ -26,6 +31,9 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
         { status: 200, body: "{}" }
       end
     stub_request(:get, comments_url).with(query: hash_including({})).to_return(status: 200, body: "[]")
+    stub_request(:get, "https://api.github.com/repos/owner/repository_name/pulls/10/files").
+      with(query: hash_including({})).
+      to_return(status: 200, body: changed_files.map { |filename| { "filename" => filename } }.to_json)
     stub_request(:post, comments_url).to_return(status: 200, body: '{"id": "id"}')
   end
 

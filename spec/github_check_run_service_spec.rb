@@ -18,20 +18,77 @@ describe GithubCheckRunService do
       to_return(status: 200, body: comments.to_json)
   end
 
-  before { stub_existing_comments(1, []) }
+  def stub_changed_files(page, filenames)
+    stub_request(:get, "https://api.github.com/repos/owner/repository_name/pulls/10/files").
+      with(query: { "per_page" => "100", "page" => page.to_s }).
+      to_return(status: 200, body: filenames.map { |filename| { "filename" => filename } }.to_json)
+  end
 
-  it "#run" do # rubocop:disable RSpec/ExampleLength
-    stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
+  def stub_check_run
+    stub_request(:post, "https://api.github.com/repos/owner/repository_name/check-runs").
+      to_return(status: 200, body: '{"id": "id"}')
+    stub_request(:patch, "https://api.github.com/repos/owner/repository_name/check-runs/id").
       to_return(status: 200, body: "{}")
+  end
 
-    stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs").
-      to_return(status: 200, body: '{"id": "id"}')
+  before do
+    stub_existing_comments(1, [])
+    stub_changed_files(1, brakeman_report["warnings"].map { |warning| warning["file"] }.uniq)
+  end
 
-    stub_request(:any, "https://api.github.com/repos/owner/repository_name/pulls/10/comments").
-      to_return(status: 200, body: '{"id": "id"}')
+  it "completes the check run as a failure when there are warnings" do
+    stub_check_run
+    stub_request(:post, comments_url).to_return(status: 200, body: '{"id": "id"}')
+    service.run
+    expect(a_request(:patch, "https://api.github.com/repos/owner/repository_name/check-runs/id").
+      with(body: hash_including("status" => "completed", "conclusion" => "failure"))).to have_been_made.once
+  end
 
-    output = service.run
-    expect(output).to be_a(Hash)
+  context "when only some warnings are in files changed by the PR" do
+    before do
+      stub_check_run
+      stub_request(:post, comments_url).to_return(status: 200, body: '{"id": "id"}')
+    end
+
+    it "comments only on warnings in changed files" do
+      stub_changed_files(1, ["app/controllers/password_resets_controller.rb"])
+      service.run
+      expect(a_request(:post, comments_url)).to have_been_made.times(3)
+    end
+
+    it "finds changed files on a later page" do
+      stub_changed_files(1, Array.new(100) { |i| "unrelated_#{i}.rb" })
+      stub_changed_files(2, ["app/controllers/password_resets_controller.rb"])
+      service.run
+      expect(a_request(:post, comments_url)).to have_been_made.times(3)
+    end
+  end
+
+  context "when posting a PR comment fails" do
+    before do
+      stub_check_run
+      stub_request(:post, comments_url).to_return(status: [403, "Forbidden"], body: '{"message":"rate limited"}')
+      stub_const("GithubCheckRunService::MAX_ANNOTATIONS_SIZE", 2)
+    end
+
+    it "still uploads every annotation batch" do
+      allow($stdout).to receive(:puts)
+      service.run
+      expect(a_request(:patch, "https://api.github.com/repos/owner/repository_name/check-runs/id")).
+        to have_been_made.times(13)
+    end
+
+    it "logs a warning for the failed comment" do
+      expect { service.run }.
+        to output(%r{::warning::Could not post PR comment on app/controllers/password_resets_controller.rb:6}).
+        to_stdout
+    end
+
+    it "attempts the remaining comments" do
+      allow($stdout).to receive(:puts)
+      service.run
+      expect(a_request(:post, comments_url)).to have_been_made.times(25)
+    end
   end
 
   context "when the run is not for a pull request" do

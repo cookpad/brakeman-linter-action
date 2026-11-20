@@ -30,6 +30,6 @@ describe GithubClient do
   it "raises with the status message and body for other failures" do
     stub_request(:post, url).to_return(status: [403, "Forbidden"], body: '{"message":"nope"}')
     expect { client.post("/repos/owner/repo/pulls/10/comments") }.
-      to raise_error(RuntimeError, 'Forbidden: {"message":"nope"}')
+      to raise_error(GithubClient::RequestError, 'Forbidden: {"message":"nope"}')
   end
 end
