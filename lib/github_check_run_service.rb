@@ -26,12 +26,18 @@ class GithubCheckRunService
     result = {}
     @annotations.each_slice(MAX_ANNOTATIONS_SIZE) do |batch|
       result.merge!(client_patch_annotations(id, batch))
-      batch.each { |annotation| client_post_pull_requests(annotation) }
+      post_pull_request_comments(batch)
     end
     result
   end
 
   private
+
+    def post_pull_request_comments(annotations)
+      return unless @github_data[:pull_request_number]
+
+      annotations.each { |annotation| client_post_pull_requests(annotation) }
+    end
 
     def client_patch_annotations(id, annotations)
       @client.patch(

@@ -21,7 +21,7 @@ project_path = if ENV["PROJECT_PATH"].nil?
 @event_json = read_json(ENV["GITHUB_EVENT_PATH"]) if ENV["GITHUB_EVENT_PATH"]
 @github_data = {
   sha: ENV.fetch("GITHUB_SHA", nil),
-  latest_commit_sha: ENV.fetch("GITHUB_LATEST_SHA", nil),
+  latest_commit_sha: ENV["GITHUB_LATEST_SHA"] || @event_json.dig("pull_request", "head", "sha"),
   token: ENV.fetch("GITHUB_TOKEN", nil),
   owner: ENV["GITHUB_REPOSITORY_OWNER"] || @event_json.dig("repository", "owner", "login"),
   repo: ENV["GITHUB_REPOSITORY_NAME"] || @event_json.dig("repository", "name"),

@@ -34,6 +34,20 @@ describe GithubCheckRunService do
     expect(output).to be_a(Hash)
   end
 
+  context "when the run is not for a pull request" do
+    it "completes the check run without touching PR comments" do # rubocop:disable RSpec/ExampleLength
+      stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs").
+        to_return(status: 200, body: '{"id": "id"}')
+
+      stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
+        to_return(status: 200, body: "{}")
+
+      described_class.new(brakeman_report, github_data.except(:pull_request_number), ReportAdapter).run
+
+      expect(a_request(:any, %r{/pulls/})).not_to have_been_made
+    end
+  end
+
   context "when there are no findings" do
     it "completes the check run as a success" do # rubocop:disable RSpec/ExampleLength
       stub_request(:any, "https://api.github.com/repos/owner/repository_name/check-runs/id").
