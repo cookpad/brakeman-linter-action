@@ -64,10 +64,42 @@ describe GithubCheckRunService do
     end
   end
 
+  context "when the scan is clean on a pull request" do
+    it "makes no pull request requests" do
+      stub_check_run
+      described_class.new(no_findings_brakeman_report, github_data, ReportAdapter).run
+      expect(a_request(:any, %r{/pulls/})).not_to have_been_made
+    end
+  end
+
+  {
+    "changed files" => "https://api.github.com/repos/owner/repository_name/pulls/10/files",
+    "existing comments" => "https://api.github.com/repos/owner/repository_name/pulls/10/comments"
+  }.each do |name, url|
+    context "when fetching #{name} fails" do
+      before do
+        stub_check_run
+        stub_request(:get, url).with(query: hash_including({})).
+          to_return(status: [403, "Forbidden"], body: '{"message":"Resource not accessible by integration"}')
+      end
+
+      it "logs a warning and skips PR comments without failing" do
+        expect { service.run }.
+          to output(/::warning::Could not fetch pull request data, skipping PR comments: Forbidden/).to_stdout
+      end
+
+      it "posts no PR comments" do
+        allow($stdout).to receive(:puts)
+        service.run
+        expect(a_request(:post, comments_url)).not_to have_been_made
+      end
+    end
+  end
+
   context "when posting a PR comment fails" do
     before do
       stub_check_run
-      stub_request(:post, comments_url).to_return(status: [403, "Forbidden"], body: '{"message":"rate limited"}')
+      stub_request(:post, comments_url).to_return(status: [403, "Forbidden"], body: '{"message":"Resource not accessible by integration"}')
       stub_const("GithubCheckRunService::MAX_ANNOTATIONS_SIZE", 2)
     end
 

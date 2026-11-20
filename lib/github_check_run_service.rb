@@ -34,14 +34,25 @@ class GithubCheckRunService
     end
 
     def post_pull_request_comments
-      return unless @github_data[:pull_request_number]
+      return if @annotations.empty? || !@github_data[:pull_request_number]
 
-      changed_files = fetch_all_pages(pull_request_files_url).map { |file| file["filename"] }
-      @existing_comments = fetch_all_pages(pull_request_endpoint_url).map do |comment|
-        { path: comment["path"], line: comment["line"], body: comment["body"] }
-      end
+      changed_files = fetch_changed_files
+      @existing_comments = fetch_existing_comments
+    rescue GithubClient::RequestError => e
+      puts "::warning::Could not fetch pull request data, skipping PR comments: #{e.message}"
+    else
       @annotations.each do |annotation|
         client_post_pull_requests(annotation) if changed_files.include?(annotation["path"])
+      end
+    end
+
+    def fetch_changed_files
+      fetch_all_pages(pull_request_files_url).map { |file| file["filename"] }
+    end
+
+    def fetch_existing_comments
+      fetch_all_pages(pull_request_endpoint_url).map do |comment|
+        { path: comment["path"], line: comment["line"], body: comment["body"] }
       end
     end
 
