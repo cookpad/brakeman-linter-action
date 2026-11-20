@@ -76,6 +76,12 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
       run_action("GITHUB_PULL_REQUEST_NUMBER" => "")
       expect(a_request(:any, %r{/pulls/})).not_to have_been_made
     end
+
+    it "comments on the PR given by GITHUB_PULL_REQUEST_NUMBER and GITHUB_LATEST_SHA" do
+      run_action("GITHUB_PULL_REQUEST_NUMBER" => "10", "GITHUB_LATEST_SHA" => "pr-head-sha")
+      expect(a_request(:post, comments_url).with(body: hash_including("commit_id" => "pr-head-sha"))).
+        to have_been_made.times(25)
+    end
   end
 
   def annotated_paths
