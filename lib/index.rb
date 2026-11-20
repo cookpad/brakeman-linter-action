@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "net/http"
+require "open3"
 require "json"
 require "pathname"
 require "time"
@@ -10,6 +11,14 @@ require_relative "github_client"
 
 def read_json(path)
   JSON.parse(File.read(path))
+end
+
+def run_brakeman(dir)
+  stdout, stderr, status = Open3.capture3("brakeman", "-f", "json", chdir: dir)
+  JSON.parse(stdout)
+rescue JSON::ParserError
+  output = [stderr, stdout].map(&:strip).reject(&:empty?).join("\n").lines.last(20).join
+  abort("::error::Brakeman did not produce a JSON report (exit status #{status.exitstatus}). Output:\n#{output}")
 end
 
 def non_empty_env(name)
@@ -51,7 +60,7 @@ commit_sha = non_empty_env("GITHUB_LATEST_SHA") ||
   if ENV["REPORT_PATH"]
     read_json(ENV["REPORT_PATH"])
   else
-    Dir.chdir(project_path) { JSON.parse(`brakeman -f json`) }
+    run_brakeman(project_path)
   end
 
 app_path = Pathname.new(@report.dig("scan_info", "app_path").to_s)

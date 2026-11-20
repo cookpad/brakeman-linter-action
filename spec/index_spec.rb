@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "./spec/spec_helper"
+require "open3"
 require "tmpdir"
 
 describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is a script, not a class
@@ -45,6 +46,31 @@ describe "lib/index.rb" do # rubocop:disable RSpec/DescribeClass -- index.rb is 
       "REPORT_PATH" => "./spec/fixtures/report.json"
     }.merge(env))
     load "./lib/index.rb"
+  end
+
+  context "when the action runs Brakeman itself" do
+    def brakeman_env
+      { "REPORT_PATH" => nil, "GITHUB_WORKSPACE" => tmpdir }
+    end
+
+    def brakeman_result(stdout, stderr, exitstatus)
+      [stdout, stderr, instance_double(Process::Status, exitstatus:)]
+    end
+
+    it "runs Brakeman in the workspace and reports its JSON output" do
+      allow(Open3).to receive(:capture3).
+        and_return(brakeman_result(File.read("./spec/fixtures/report.json"), "", 3))
+      run_action(brakeman_env)
+      expect(Open3).to have_received(:capture3).with("brakeman", "-f", "json", chdir: tmpdir)
+    end
+
+    it "stops with Brakeman's exit status and output when it doesn't produce JSON" do
+      allow(Open3).to receive(:capture3).and_return(brakeman_result("", "Please supply the path to a Rails application.", 4))
+      expect { run_action(brakeman_env) }.
+        to raise_error(SystemExit).
+        and output(/::error::Brakeman did not produce a JSON report \(exit status 4\).*Please supply the path/m).
+        to_stderr
+    end
   end
 
   it "reports to the repository from the event even if GITHUB_REPOSITORY_NAME is set" do
